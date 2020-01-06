@@ -1,17 +1,15 @@
 package cz.cvut.kozlovsky.communication;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.extern.java.Log;
 
-import java.net.MalformedURLException;
-import java.rmi.AlreadyBoundException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 @Log
 class NetworkTrackerImpl extends UnicastRemoteObject implements NetworkTracker {

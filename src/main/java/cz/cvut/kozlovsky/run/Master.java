@@ -1,10 +1,8 @@
-package cz.cvut.kozlovsky;
+package cz.cvut.kozlovsky.run;
 
 import cz.cvut.kozlovsky.communication.NodeImpl;
 
-import java.net.InetAddress;
 import java.net.MalformedURLException;
-import java.net.UnknownHostException;
 import java.rmi.AlreadyBoundException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
@@ -12,8 +10,6 @@ import java.rmi.RemoteException;
 public class Master {
 
     public static void main(String[] args) throws AlreadyBoundException, RemoteException, MalformedURLException {
-        //System.setProperty("java.rmi.server.hostname", "127.0.0.1");
-        System.setProperty("sun.rmi.transport.connectionTimeout", "1");
 
         final int id = 100;
         final String ipAddress = "127.0.0.1";
