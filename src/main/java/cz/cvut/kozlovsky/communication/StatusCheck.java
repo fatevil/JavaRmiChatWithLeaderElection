@@ -5,35 +5,35 @@ import lombok.AllArgsConstructor;
 import java.rmi.RemoteException;
 import java.util.concurrent.*;
 
-enum StatusCheck {
+public enum StatusCheck {
     INSTANCE; // singleton
 
     /**
      * Check availability of network node.
      *
-     * @param node
+     * @param touchable
      * @param timeout
      * @param timeUnit
      * @throws InterruptedException
      * @throws ExecutionException
      * @throws TimeoutException
      */
-    static void checkAvailability(Node node, int timeout, TimeUnit timeUnit) throws InterruptedException, ExecutionException, TimeoutException {
+    public static void checkAvailability(Touchable touchable, int timeout, TimeUnit timeUnit) throws InterruptedException, ExecutionException, TimeoutException {
         ExecutorService executors = Executors.newSingleThreadExecutor();
 
         // see if node is still available
-        Future<Boolean> f = executors.submit(new StatusCheckJob(node));
+        Future<Boolean> f = executors.submit(new StatusCheckJob(touchable));
         f.get(timeout, timeUnit);
     }
 
     @AllArgsConstructor
     private static class StatusCheckJob implements Callable<Boolean> {
-        private Node node;
+        private Touchable touchable;
 
         @Override
         public Boolean call() {
             try {
-                node.touch();
+                touchable.touch();
                 return true;
             } catch (RemoteException e) {
                 return false;

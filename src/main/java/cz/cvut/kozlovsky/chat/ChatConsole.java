@@ -2,12 +2,16 @@ package cz.cvut.kozlovsky.chat;
 
 import cz.cvut.kozlovsky.communication.NetworkTracker;
 import cz.cvut.kozlovsky.communication.Node;
+import cz.cvut.kozlovsky.communication.StatusCheck;
 import lombok.extern.java.Log;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.rmi.RemoteException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 @Log
 public class ChatConsole {
@@ -74,7 +78,17 @@ public class ChatConsole {
     public void sendMessage(String message) throws RemoteException {
         final String prefix = "==== " + node.getNickname() + ": ";
 
-        networkTracker.destributeChatMessage(prefix + message);
+        try {
+            // first check if master is still available
+            StatusCheck.checkAvailability(networkTracker, 50, TimeUnit.MILLISECONDS);
+
+            // then send message
+            networkTracker.destributeChatMessage(prefix + message);
+
+        } catch (InterruptedException | ExecutionException | TimeoutException e) {
+            log.severe("==== GOT DISCONNECTED FROM MASTER ==== ");
+            e.printStackTrace();
+        }
     }
 
 }

@@ -51,6 +51,8 @@ class NetworkTrackerImpl extends UnicastRemoteObject implements NetworkTracker {
     }
 
     private void checkEveryone() {
+        // check if everyone is still available, otherwise remove them from the chat
+
         nodes.forEach((id, node) -> {
             try {
                 StatusCheck.checkAvailability(node, 50, TimeUnit.MILLISECONDS);
