@@ -11,7 +11,7 @@ import java.rmi.RemoteException;
 
 public class Master {
 
-    public static void main(String[] args) throws AlreadyBoundException, RemoteException, MalformedURLException, UnknownHostException {
+    public static void main(String[] args) throws AlreadyBoundException, RemoteException, MalformedURLException {
         //System.setProperty("java.rmi.server.hostname", "127.0.0.1");
         System.setProperty("sun.rmi.transport.connectionTimeout", "1");
 
@@ -35,13 +35,7 @@ public class Master {
 
                 try {
                     NodeImpl nodeImpl = new NodeImpl(id, ipAddress, port, name, remoteAddress, remotePort);
-                } catch (RemoteException e) {
-                    e.printStackTrace();
-                } catch (MalformedURLException e) {
-                    e.printStackTrace();
-                } catch (NotBoundException e) {
-                    e.printStackTrace();
-                } catch (AlreadyBoundException e) {
+                } catch (RemoteException | NotBoundException e) {
                     e.printStackTrace();
                 }
             }

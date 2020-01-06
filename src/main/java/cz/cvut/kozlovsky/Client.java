@@ -1,18 +1,13 @@
 package cz.cvut.kozlovsky;
 
 import cz.cvut.kozlovsky.communication.NodeImpl;
-import cz.cvut.kozlovsky.exception.NotLeaderException;
 
-import java.net.InetAddress;
-import java.net.MalformedURLException;
-import java.net.UnknownHostException;
-import java.rmi.AlreadyBoundException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 
 public class Client {
 
-    public static void main(String[] args) throws NotLeaderException, RemoteException, MalformedURLException, NotBoundException, UnknownHostException, AlreadyBoundException {
+    public static void main(String[] args) throws RemoteException, NotBoundException {
         //System.setProperty("java.rmi.server.hostname", "127.0.0.1");
         System.setProperty("sun.rmi.transport.connectionTimeout", "200");
 

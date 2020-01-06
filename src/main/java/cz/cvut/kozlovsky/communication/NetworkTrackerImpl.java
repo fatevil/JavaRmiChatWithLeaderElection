@@ -20,7 +20,7 @@ class NetworkTrackerImpl extends UnicastRemoteObject implements NetworkTracker {
     private final Map<Integer, Node> nodes = new ConcurrentHashMap<>();
 
     @Builder
-    public NetworkTrackerImpl(NodeImpl leader) throws RemoteException, MalformedURLException, AlreadyBoundException {
+    public NetworkTrackerImpl(NodeImpl leader) throws RemoteException {
         super();
         log.info(String.format("Creating network with leader ID ", leader.getId()));
         this.nodes.put(leader.getId(), leader);

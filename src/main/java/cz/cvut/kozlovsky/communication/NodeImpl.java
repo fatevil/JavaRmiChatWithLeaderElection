@@ -41,7 +41,7 @@ public class NodeImpl extends UnicastRemoteObject implements Node {
         this.chatConsole = new ChatConsole(networkTracker, this);
     }
 
-    public NodeImpl(int id, String ipAddress, int port, String nickname, String remoteAddress, int remotePort) throws RemoteException, MalformedURLException, NotBoundException, AlreadyBoundException {
+    public NodeImpl(int id, String ipAddress, int port, String nickname, String remoteAddress, int remotePort) throws RemoteException, NotBoundException {
         this.id = id;
         this.ipAddress = ipAddress;
         this.port = port;
@@ -61,7 +61,7 @@ public class NodeImpl extends UnicastRemoteObject implements Node {
         registry.bind("NetworkTracker", this.networkTracker);
     }
 
-    public void joinNetwork(String remoteAddress, int remotePort) throws RemoteException, MalformedURLException, NotBoundException, AlreadyBoundException {
+    public void joinNetwork(String remoteAddress, int remotePort) throws RemoteException, NotBoundException {
         log.info("Lookup NetworkTracker at: " + "//" + remoteAddress + ":" + remotePort + "/NetworkTracker");
 
         final Registry remoteRegistry = LocateRegistry.getRegistry(remotePort);
