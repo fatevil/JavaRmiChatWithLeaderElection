@@ -35,7 +35,6 @@ public class ChatConsole {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 
         sendMessage("Hi to everyone, glad to be joining the chatter! All ready gossip!");
-        chat:
         while (true) {
             String line;
             try {
@@ -43,11 +42,15 @@ public class ChatConsole {
 
                 switch (line) {
                     case "EXIT":
-                        break chat;
+                        System.exit(0);
                     case "PAUSE":
                         receiving = false;
+                        System.out.println("Stopped receiving chat. Use CONTINUE to get back to discussion.");
+                        break;
                     case "CONTINUE":
                         receiving = true;
+                        System.out.println("Back in business my friend.");
+                        break;
                     default:
                         if (receiving) {
                             sendMessage(line);

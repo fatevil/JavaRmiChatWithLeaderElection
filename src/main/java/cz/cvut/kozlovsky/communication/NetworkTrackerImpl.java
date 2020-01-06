@@ -51,37 +51,13 @@ class NetworkTrackerImpl extends UnicastRemoteObject implements NetworkTracker {
     }
 
     private void checkEveryone() {
-        ExecutorService executors = Executors.newSingleThreadExecutor();
-        List<Callable<Boolean>> list = new ArrayList<>(nodes.size());
-
         nodes.forEach((id, node) -> {
             try {
-                // see if node is still available
-                Future<Boolean> f = executors.submit(new StatusCheckJob(node));
-                f.get(50, TimeUnit.MILLISECONDS);
-
+                StatusCheck.checkAvailability(node, 50, TimeUnit.MILLISECONDS);
             } catch (InterruptedException | ExecutionException | TimeoutException e) {
                 nodes.remove(id);
                 log.info("Node with ID " + id + " not reachable! REMOVED FROM CHAT.");
             }
         });
     }
-
-    // is there any other more efficient way?
-    // maybe making nodes periodically look for the message themselves would make it easier
-    @AllArgsConstructor
-    private class StatusCheckJob implements Callable<Boolean> {
-        private Node node;
-
-        @Override
-        public Boolean call() {
-            try {
-                node.touch();
-                return true;
-            } catch (RemoteException e) {
-                return false;
-            }
-        }
-    }
-
 }
