@@ -84,27 +84,23 @@ class NetworkTrackerImpl extends UnicastRemoteObject implements NetworkTracker {
      */
     public void fixNeighbours() throws RemoteException {
         if (nodes.size() == 1) {
-            Neighbours neighbours = new NeighboursImpl();
+            Neighbours neighbours = leader.getNeighbours();
             neighbours.setLeft(leader);
             neighbours.setRight(leader);
-            neighbours.setMyself(leader);
 
-            leader.setNeighbours(neighbours);
         } else {
 
             List<Node> updatedNodes = new ArrayList<>(nodes.values());
             for (int i = 0; i < updatedNodes.size(); i++) {
-                Neighbours neighbours = new NeighboursImpl();
 
                 int following = (i + 1) % (updatedNodes.size() - 1);
                 int previous = (i - 1) % (updatedNodes.size() - 1);
 
-                neighbours.setLeft(updatedNodes.get(previous));
-                neighbours.setRight(updatedNodes.get(following));
-                neighbours.setMyself(updatedNodes.get(i));
+                Neighbours neighbours;
+                synchronized (neighbours = updatedNodes.get(i).getNeighbours()) {
 
-                synchronized (updatedNodes.get(i)) {
-                    updatedNodes.get(i).setNeighbours(neighbours);
+                    neighbours.setLeft(updatedNodes.get(previous));
+                    neighbours.setRight(updatedNodes.get(following));
                 }
             }
         }
