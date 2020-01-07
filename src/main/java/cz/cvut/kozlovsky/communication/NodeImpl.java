@@ -79,7 +79,7 @@ public class NodeImpl extends UnicastRemoteObject implements Node {
     }
 
     @Override
-    public void fixNetwork() {
+    public void fixNetwork() throws RemoteException {
         neighbours.getNewLeader();
     }
 

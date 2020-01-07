@@ -21,6 +21,6 @@ public interface Neighbours extends Reachable, Remote {
 
     void setMyself(Node node) throws RemoteException;
 
-    NodeStub getNewLeader();
+    NodeStub getNewLeader() throws RemoteException;
 
 }

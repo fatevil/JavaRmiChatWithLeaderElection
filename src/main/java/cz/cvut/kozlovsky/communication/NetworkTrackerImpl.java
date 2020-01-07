@@ -40,10 +40,9 @@ class NetworkTrackerImpl extends UnicastRemoteObject implements NetworkTracker {
     public void acceptMember(Node newComer) throws RemoteException {
         log.info(String.format("Accepting node with ID ", newComer.getId()));
 
-        // no need for synchronized, thanks to concurrent data structure
+        // no need for synchronized block for put, thanks to concurrent data structure
         nodes.put(newComer.getId(), newComer);
         fixNeighbours();
-        System.out.println(newComer.getNeighbours());
     }
 
     @Override
@@ -104,7 +103,9 @@ class NetworkTrackerImpl extends UnicastRemoteObject implements NetworkTracker {
                 neighbours.setRight(updatedNodes.get(following));
                 neighbours.setMyself(updatedNodes.get(i));
 
-                updatedNodes.get(i).setNeighbours(neighbours);
+                synchronized (updatedNodes.get(i)) {
+                    updatedNodes.get(i).setNeighbours(neighbours);
+                }
             }
         }
     }
