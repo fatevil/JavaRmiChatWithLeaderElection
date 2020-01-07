@@ -2,6 +2,7 @@ package cz.cvut.kozlovsky.topology;
 
 import cz.cvut.kozlovsky.communication.Node;
 import cz.cvut.kozlovsky.dto.NodeStub;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.java.Log;
@@ -17,7 +18,9 @@ public class NeighboursImpl extends UnicastRemoteObject implements Neighbours {
     private NodeStub left;
     private NodeStub right;
 
-    public NeighboursImpl() throws RemoteException {
+    @Builder
+    public NeighboursImpl(Node myself) throws RemoteException {
+        this.myself = new NodeStub(myself);
     }
 
     /**

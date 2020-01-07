@@ -1,7 +1,10 @@
 package cz.cvut.kozlovsky.communication;
 
 import cz.cvut.kozlovsky.chat.ChatConsole;
+import cz.cvut.kozlovsky.network.EstablishedNetwork;
+import cz.cvut.kozlovsky.network.EstablishedNetworkImpl;
 import cz.cvut.kozlovsky.topology.Neighbours;
+import cz.cvut.kozlovsky.topology.NeighboursImpl;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -28,8 +31,8 @@ public class NodeImpl extends UnicastRemoteObject implements Node {
     private final int port;
     private final String nickname;
 
-    private Neighbours neighbours;
-    private NetworkTracker networkTracker;
+    private final Neighbours neighbours;
+    private EstablishedNetwork establishedNetwork;
     private ChatConsole chatConsole;
 
     /**
@@ -40,9 +43,11 @@ public class NodeImpl extends UnicastRemoteObject implements Node {
         this.ipAddress = ipAddress;
         this.port = port;
         this.nickname = nickname;
+        this.neighbours = new NeighboursImpl(this);
 
-        createNetwork();
-        this.chatConsole = new ChatConsole(networkTracker, this);
+        createEstablishedNetwork();
+        this.chatConsole = new ChatConsole(establishedNetwork, this);
+        this.chatConsole.startChatting();
     }
 
     /**
@@ -53,29 +58,33 @@ public class NodeImpl extends UnicastRemoteObject implements Node {
         this.ipAddress = ipAddress;
         this.port = port;
         this.nickname = nickname;
+        this.neighbours = new NeighboursImpl(this);
 
-        joinNetwork(remoteAddress, remotePort);
-        this.chatConsole = new ChatConsole(networkTracker, this);
+        joinEstablishedNetwork(remoteAddress, remotePort);
+        this.chatConsole = new ChatConsole(establishedNetwork, this);
+        this.chatConsole.startChatting();
     }
 
-    private void createNetwork() throws RemoteException, MalformedURLException, AlreadyBoundException {
+    private void createEstablishedNetwork() throws RemoteException, MalformedURLException, AlreadyBoundException {
         log.info("Register NetworkTracker at: " + "//" + this.getIpAddress() + ":" + this.getPort() + "/NetworkTracker");
-        this.networkTracker = new NetworkTrackerImpl(this);
+        this.establishedNetwork = new EstablishedNetworkImpl(this);
 
         final Registry registry = LocateRegistry.createRegistry(this.getPort());
-        registry.bind("NetworkTracker", this.networkTracker);
+        registry.bind("NetworkTracker", this.establishedNetwork);
     }
 
-    private void joinNetwork(String remoteAddress, int remotePort) throws RemoteException, NotBoundException, MalformedURLException {
+    private void joinEstablishedNetwork(String remoteAddress, int remotePort) throws RemoteException, NotBoundException, MalformedURLException {
         log.info("Lookup NetworkTracker at: " + "//" + remoteAddress + ":" + remotePort + "/NetworkTracker");
 
-        networkTracker = (NetworkTracker) Naming.lookup("//" + remoteAddress + ":" + remotePort + "/NetworkTracker");
-        networkTracker.acceptMember(this);
+        establishedNetwork = (EstablishedNetwork) Naming.lookup("//" + remoteAddress + ":" + remotePort + "/NetworkTracker");
+        establishedNetwork.acceptMember(this);
     }
 
-    @Override
-    public void receiveChatMessage(String message) {
-        chatConsole.receiveMessage(message);
+    private void createMessageEndpoint() throws RemoteException, MalformedURLException, AlreadyBoundException {
+        log.info("Create Message endpoint at: " + "//" + this.getIpAddress() + ":" + this.getPort() + "/Message");
+
+        final Registry registry = LocateRegistry.createRegistry(this.getPort());
+        registry.bind("Message", this.neighbours);
     }
 
     @Override
@@ -83,8 +92,5 @@ public class NodeImpl extends UnicastRemoteObject implements Node {
         neighbours.getNewLeader();
     }
 
-    public void startChatting() throws RemoteException {
-        chatConsole.startChatting();
-    }
 }
 

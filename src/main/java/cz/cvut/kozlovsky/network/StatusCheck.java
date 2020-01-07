@@ -1,4 +1,4 @@
-package cz.cvut.kozlovsky.communication;
+package cz.cvut.kozlovsky.network;
 
 import lombok.AllArgsConstructor;
 

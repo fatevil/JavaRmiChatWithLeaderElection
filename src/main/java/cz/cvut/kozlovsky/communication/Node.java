@@ -1,5 +1,8 @@
 package cz.cvut.kozlovsky.communication;
 
+import cz.cvut.kozlovsky.chat.ChatConsole;
+import cz.cvut.kozlovsky.chat.MessageHandler;
+import cz.cvut.kozlovsky.network.Reachable;
 import cz.cvut.kozlovsky.topology.Neighbours;
 
 import java.rmi.Remote;
@@ -15,11 +18,9 @@ public interface Node extends Remote, Reachable {
 
     int getPort() throws RemoteException;
 
-    void receiveChatMessage(String message) throws RemoteException;
-
-    void setNeighbours(Neighbours neighbours) throws RemoteException;
-
     Neighbours getNeighbours() throws RemoteException;
+
+    MessageHandler getChatConsole() throws RemoteException;
 
     void fixNetwork() throws RemoteException;
 

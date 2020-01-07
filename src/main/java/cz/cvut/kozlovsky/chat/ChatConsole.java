@@ -1,27 +1,29 @@
 package cz.cvut.kozlovsky.chat;
 
-import cz.cvut.kozlovsky.communication.NetworkTracker;
+import com.sun.xml.internal.ws.wsdl.writer.document.Message;
+import cz.cvut.kozlovsky.network.EstablishedNetwork;
 import cz.cvut.kozlovsky.communication.Node;
-import cz.cvut.kozlovsky.communication.StatusCheck;
+import cz.cvut.kozlovsky.network.StatusCheck;
 import lombok.extern.java.Log;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 @Log
-public class ChatConsole {
+public class ChatConsole extends UnicastRemoteObject implements MessageHandler {
 
     private boolean receiving;
     private Node node;
-    private NetworkTracker networkTracker;
+    private EstablishedNetwork establishedNetwork;
 
-    public ChatConsole(NetworkTracker networkTracker, Node node) throws RemoteException {
-        this.networkTracker = networkTracker;
+    public ChatConsole(EstablishedNetwork establishedNetwork, Node node) throws RemoteException {
+        this.establishedNetwork = establishedNetwork;
         this.node = node;
     }
 
@@ -90,10 +92,10 @@ public class ChatConsole {
         while (!isSend) {
             try {
                 // first check if master is still available
-                StatusCheck.checkAvailability(networkTracker, 50, TimeUnit.MILLISECONDS);
+                StatusCheck.checkAvailability(establishedNetwork, 50, TimeUnit.MILLISECONDS);
 
                 // then send message
-                networkTracker.destributeChatMessage(prefix + message);
+                establishedNetwork.destributeChatMessage(prefix + message);
                 isSend = true;
 
             } catch (InterruptedException | ExecutionException | TimeoutException e) {

@@ -17,7 +17,7 @@ public class Master {
         final String name = "Markos";
 
         NodeImpl nodeImpl = new NodeImpl(id, ipAddress, port, name);
-        nodeImpl.startChatting();
+        //nodeImpl.startChatting();
 
         Thread thread = new Thread() {
             public void run() {

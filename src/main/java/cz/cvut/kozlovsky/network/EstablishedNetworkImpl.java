@@ -1,7 +1,8 @@
-package cz.cvut.kozlovsky.communication;
+package cz.cvut.kozlovsky.network;
 
+import cz.cvut.kozlovsky.communication.Node;
+import cz.cvut.kozlovsky.communication.NodeImpl;
 import cz.cvut.kozlovsky.topology.Neighbours;
-import cz.cvut.kozlovsky.topology.NeighboursImpl;
 import lombok.Builder;
 import lombok.extern.java.Log;
 
@@ -23,13 +24,14 @@ import java.util.concurrent.TimeoutException;
  * After each check, if any node was removed, set new topology neighbours to all nodes.
  */
 @Log
-class NetworkTrackerImpl extends UnicastRemoteObject implements NetworkTracker {
+public
+class EstablishedNetworkImpl extends UnicastRemoteObject implements EstablishedNetwork {
 
     private Node leader;
     private final Map<Integer, Node> nodes = new ConcurrentHashMap<>();
 
     @Builder
-    public NetworkTrackerImpl(NodeImpl leader) throws RemoteException {
+    public EstablishedNetworkImpl(NodeImpl leader) throws RemoteException {
         super();
         log.info(String.format("Creating network with leader ID ", leader.getId()));
         this.leader = leader;
@@ -51,7 +53,7 @@ class NetworkTrackerImpl extends UnicastRemoteObject implements NetworkTracker {
 
         nodes.forEach((id, node) -> {
             try {
-                node.receiveChatMessage(chatMessage);
+                node.getChatConsole().receiveMessage(chatMessage);
             } catch (RemoteException e) {
                 e.printStackTrace();
             }

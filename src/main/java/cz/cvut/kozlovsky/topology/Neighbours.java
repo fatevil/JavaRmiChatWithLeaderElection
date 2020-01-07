@@ -1,7 +1,7 @@
 package cz.cvut.kozlovsky.topology;
 
 import cz.cvut.kozlovsky.communication.Node;
-import cz.cvut.kozlovsky.communication.Reachable;
+import cz.cvut.kozlovsky.network.Reachable;
 import cz.cvut.kozlovsky.dto.NodeStub;
 
 import java.rmi.Remote;
