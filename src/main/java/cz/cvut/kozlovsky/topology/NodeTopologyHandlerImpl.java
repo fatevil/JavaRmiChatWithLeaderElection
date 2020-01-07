@@ -4,6 +4,7 @@ import cz.cvut.kozlovsky.model.Node;
 import cz.cvut.kozlovsky.model.NodeStub;
 import cz.cvut.kozlovsky.network.StatusCheck;
 import lombok.Builder;
+import lombok.Data;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.java.Log;
@@ -13,13 +14,13 @@ import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.concurrent.TimeUnit;
+
 
 import static cz.cvut.kozlovsky.topology.TopologyMessagePurpose.TOPOLOGY_NOT_OKAY_LEFT;
 import static cz.cvut.kozlovsky.topology.TopologyMessagePurpose.TOPOLOGY_NOT_OKAY_RIGHT;
 
 @Log
-@Getter
+@Data
 public class NodeTopologyHandlerImpl extends UnicastRemoteObject implements NodeTopologyHandler {
 
     private NodeStub myself;
@@ -43,16 +44,20 @@ public class NodeTopologyHandlerImpl extends UnicastRemoteObject implements Node
 
         // if previously not okay and got some else not okay, assign him
 
+        System.out.println(leftNeighbour);
+        System.out.println(myself);
+        System.out.println(rightNeighbour);
 
-        // exception on not available
-        boolean isAvailable = StatusCheck.isAvaliable(getTopologyHandler(leftNeighbour), 50, TimeUnit.MILLISECONDS);
-        if (!isAvailable) {
+        try {
+            NodeTopologyHandler handler = getTopologyHandler(leftNeighbour);
+        } catch (NotBoundException | RemoteException | MalformedURLException e) {
             log.info("Node with ID " + myself.getId() + " lost left neighbour.");
             leftNeighbour = null;
         }
 
-        isAvailable = StatusCheck.isAvaliable(getTopologyHandler(rightNeighbour), 50, TimeUnit.MILLISECONDS);
-        if (!isAvailable) {
+        try {
+            NodeTopologyHandler handler = getTopologyHandler(rightNeighbour);
+        } catch (NotBoundException | RemoteException | MalformedURLException e) {
             log.info("Node with ID " + myself.getId() + " lost right neighbour.");
             rightNeighbour = null;
         }
@@ -111,10 +116,29 @@ public class NodeTopologyHandlerImpl extends UnicastRemoteObject implements Node
         return "NeighboursImpl{meId=" + myself.getId() + ", lId=" + leftNeighbour.getId() + ", rId=" + rightNeighbour.getId() + '}';
     }
 
-
     @Override
-    public void receiveMessage(TopologyMessage message) throws RemoteException {
-        System.out.println(message);
+    public void receiveMessage(TopologyMessage message) throws RemoteException, MalformedURLException, NotBoundException {
+        switch (message.getPurpose()) {
+            case TOPOLOGY_NOT_OKAY_LEFT:
+                if (rightNeighbour == null) {
+                    synchronized (rightNeighbour) {
+                        rightNeighbour = new NodeStub(message.getOriginId(), message.getOriginIpAddress(), message.getOriginPort());
+                    }
+                } else {
+                    sendMessage(message);
+                }
+            case TOPOLOGY_NOT_OKAY_RIGHT:
+                if (leftNeighbour == null) {
+                    synchronized (leftNeighbour) {
+                        leftNeighbour = new NodeStub(message.getOriginId(), message.getOriginIpAddress(), message.getOriginPort());
+                    }
+                } else {
+                    sendMessage(message);
+
+                }
+                break;
+        }
+
     }
 
     @Override
@@ -136,7 +160,6 @@ public class NodeTopologyHandlerImpl extends UnicastRemoteObject implements Node
 
         }
     }
-
 
     private NodeTopologyHandler getTopologyHandler(NodeStub node) throws RemoteException, MalformedURLException, NotBoundException {
         log.info("Lookup TopologyHandler at: " + "//" + node.getIpAddress() + ":" + node.getPort() + "/TopologyHandler");

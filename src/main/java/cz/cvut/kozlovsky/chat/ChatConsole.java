@@ -117,12 +117,8 @@ public class ChatConsole extends UnicastRemoteObject implements MessageHandler<S
         }
         //}
 
-        nodes.forEach(n -> {
-            try {
-                n.getChatConsole().receiveMessage(message);
-            } catch (RemoteException e) {
-                e.printStackTrace();
-            }
-        });
+        for (Node n : nodes) {
+            n.getChatConsole().receiveMessage(message);
+        }
     }
 }

@@ -18,4 +18,9 @@ public class NodeStub {
         this.port = node.getPort();
     }
 
+    public NodeStub(int id, String ipAddress, int port) {
+        this.id = id;
+        this.ipAddress = ipAddress;
+        this.port = port;
+    }
 }

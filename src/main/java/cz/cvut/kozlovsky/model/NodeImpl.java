@@ -36,7 +36,7 @@ public class NodeImpl extends UnicastRemoteObject implements Node {
     private ChatConsole chatConsole;
 
     /**
-     * Constructor for leaders.
+     * Constructor for leaders.s
      */
     public NodeImpl(int id, String ipAddress, int port, String nickname) throws RemoteException, MalformedURLException, AlreadyBoundException {
         this.id = id;

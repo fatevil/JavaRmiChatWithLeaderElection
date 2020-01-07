@@ -12,9 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * Keeps track of registered network nodes. Distributes chat messages between clients.
@@ -42,16 +40,9 @@ class EstablishedNetworkImpl extends UnicastRemoteObject implements EstablishedN
     public void acceptMember(Node newComer) throws RemoteException {
         log.info(String.format("Accepting node with ID %s", newComer.getId()));
 
-        System.out.printf("==== ======== Accept" + newComer);
-        System.out.println("current size " + nodes.size());
-
         // no need for synchronized block for put, thanks to concurrent data structure
         nodes.put(newComer.getId(), newComer);
-
-        System.out.println("current size before fix " + nodes.size());
-        fixTopology();
-
-        System.out.println("current size after fix " + nodes.size());
+        fixNodeNeighbours();
     }
 
     @Override
@@ -75,49 +66,42 @@ class EstablishedNetworkImpl extends UnicastRemoteObject implements EstablishedN
                     needNeighboursFix[0] = true;
                     log.info("Node with ID " + id + " not reachable! REMOVED FROM CHAT.");
                 }
-
             } catch (RemoteException e) {
                 // should not happen (leader is always reachable)
                 e.printStackTrace();
             }
         });
 
-        if (needNeighboursFix[0]) fixTopology();
+        if (needNeighboursFix[0]) fixNodeNeighbours();
     }
 
     /**
      * Reassign left and right neighbour to every available node.
      */
-    public void fixTopology() throws RemoteException {
+    public void fixNodeNeighbours() throws RemoteException {
         if (nodes.size() == 1) {
             NodeTopologyHandler nodeTopologyHandler = leader.getNodeTopologyHandler();
             nodeTopologyHandler.setLeftNeighbour(leader);
             nodeTopologyHandler.setRightNeighbour(leader);
 
         } else {
+            List<Node> nodesCopy = new ArrayList<>(nodes.values());
 
-            List<Node> updatedNodes = new ArrayList<>(nodes.values());
-
-            NodeTopologyHandler nodeTopologyHandler;
-
-            // member with index 0 separately
-            nodeTopologyHandler = updatedNodes.get(0).getNodeTopologyHandler();
-
-            nodeTopologyHandler.setLeftNeighbour(updatedNodes.get(updatedNodes.size() - 1));
-            nodeTopologyHandler.setRightNeighbour(updatedNodes.get(1));
-
-            // the rest of the nodes
-            for (int i = 1; i < updatedNodes.size(); i++) {
-
-                int following = (i + 1) % (updatedNodes.size() - 1);
-                int previous = (i - 1) % (updatedNodes.size() - 1);
-
-                synchronized (nodeTopologyHandler = updatedNodes.get(i).getNodeTopologyHandler()) {
-
-                    nodeTopologyHandler.setLeftNeighbour(updatedNodes.get(previous));
-                    nodeTopologyHandler.setRightNeighbour(updatedNodes.get(following));
-                }
+            setNeighbours(nodesCopy, nodesCopy.size() - 1, 0, 1);
+            for (int i = 1; i < nodesCopy.size() - 1; i++) {
+                setNeighbours(nodesCopy, i - 1, i, i + 1);
             }
+            setNeighbours(nodesCopy, nodesCopy.size() - 2, nodesCopy.size() - 1, 0);
         }
     }
+
+    private void setNeighbours(List<Node> nodesCopy, int left, int myself, int right) throws RemoteException {
+        NodeTopologyHandler nodeTopologyHandler;
+
+        synchronized (nodeTopologyHandler = nodesCopy.get(myself).getNodeTopologyHandler()) {
+            nodeTopologyHandler.setLeftNeighbour(nodesCopy.get(left));
+            nodeTopologyHandler.setRightNeighbour(nodesCopy.get(right));
+        }
+    }
+
 }

@@ -1,8 +1,9 @@
 package cz.cvut.kozlovsky.topology;
 
+import java.rmi.Remote;
 import java.rmi.RemoteException;
 
-public interface TopologyMessage {
+public interface TopologyMessage extends Remote {
 
     int getOriginId() throws RemoteException;
 

@@ -7,7 +7,7 @@ import java.rmi.RemoteException;
 
 public interface MessageHandler<T> extends Remote {
 
-    void receiveMessage(T message) throws RemoteException;
+    void receiveMessage(T message) throws RemoteException, MalformedURLException, NotBoundException;
 
     void sendMessage(T message) throws RemoteException, MalformedURLException, NotBoundException;
 
