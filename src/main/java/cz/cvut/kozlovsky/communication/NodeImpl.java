@@ -9,6 +9,7 @@ import lombok.extern.java.Log;
 
 import java.net.MalformedURLException;
 import java.rmi.AlreadyBoundException;
+import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -47,7 +48,7 @@ public class NodeImpl extends UnicastRemoteObject implements Node {
     /**
      * Constructor for connecting to existing node.
      */
-    public NodeImpl(int id, String ipAddress, int port, String nickname, String remoteAddress, int remotePort) throws RemoteException, NotBoundException {
+    public NodeImpl(int id, String ipAddress, int port, String nickname, String remoteAddress, int remotePort) throws RemoteException, NotBoundException, MalformedURLException {
         this.id = id;
         this.ipAddress = ipAddress;
         this.port = port;
@@ -65,11 +66,10 @@ public class NodeImpl extends UnicastRemoteObject implements Node {
         registry.bind("NetworkTracker", this.networkTracker);
     }
 
-    private void joinNetwork(String remoteAddress, int remotePort) throws RemoteException, NotBoundException {
+    private void joinNetwork(String remoteAddress, int remotePort) throws RemoteException, NotBoundException, MalformedURLException {
         log.info("Lookup NetworkTracker at: " + "//" + remoteAddress + ":" + remotePort + "/NetworkTracker");
 
-        final Registry remoteRegistry = LocateRegistry.getRegistry(remotePort);
-        networkTracker = (NetworkTracker) remoteRegistry.lookup("NetworkTracker");
+        networkTracker = (NetworkTracker) Naming.lookup("//" + remoteAddress + ":" + remotePort + "/NetworkTracker");
         networkTracker.acceptMember(this);
     }
 
