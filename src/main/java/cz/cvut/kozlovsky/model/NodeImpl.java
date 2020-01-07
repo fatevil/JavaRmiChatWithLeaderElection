@@ -3,8 +3,8 @@ package cz.cvut.kozlovsky.model;
 import cz.cvut.kozlovsky.chat.ChatConsole;
 import cz.cvut.kozlovsky.network.EstablishedNetwork;
 import cz.cvut.kozlovsky.network.EstablishedNetworkImpl;
-import cz.cvut.kozlovsky.topology.Neighbours;
-import cz.cvut.kozlovsky.topology.NeighboursImpl;
+import cz.cvut.kozlovsky.topology.NodeTopologyHandler;
+import cz.cvut.kozlovsky.topology.NodeTopologyHandlerImpl;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -31,7 +31,7 @@ public class NodeImpl extends UnicastRemoteObject implements Node {
     private final int port;
     private final String nickname;
 
-    private final Neighbours neighbours;
+    private final NodeTopologyHandler nodeTopologyHandler;
     private EstablishedNetwork establishedNetwork;
     private ChatConsole chatConsole;
 
@@ -43,7 +43,7 @@ public class NodeImpl extends UnicastRemoteObject implements Node {
         this.ipAddress = ipAddress;
         this.port = port;
         this.nickname = nickname;
-        this.neighbours = new NeighboursImpl(this);
+        this.nodeTopologyHandler = new NodeTopologyHandlerImpl(this);
 
         createEstablishedNetwork();
         this.chatConsole = new ChatConsole(establishedNetwork, this);
@@ -58,7 +58,7 @@ public class NodeImpl extends UnicastRemoteObject implements Node {
         this.ipAddress = ipAddress;
         this.port = port;
         this.nickname = nickname;
-        this.neighbours = new NeighboursImpl(this);
+        this.nodeTopologyHandler = new NodeTopologyHandlerImpl(this);
 
         joinEstablishedNetwork(remoteAddress, remotePort);
         this.chatConsole = new ChatConsole(establishedNetwork, this);
@@ -84,12 +84,12 @@ public class NodeImpl extends UnicastRemoteObject implements Node {
         log.info("Create Message endpoint at: " + "//" + this.getIpAddress() + ":" + this.getPort() + "/Message");
 
         final Registry registry = LocateRegistry.createRegistry(this.getPort());
-        registry.bind("Message", this.neighbours);
+        registry.bind("Message", this.nodeTopologyHandler);
     }
 
     @Override
     public void fixNetwork() throws RemoteException {
-        neighbours.getNewLeader();
+        nodeTopologyHandler.getNewLeader();
     }
 
 }

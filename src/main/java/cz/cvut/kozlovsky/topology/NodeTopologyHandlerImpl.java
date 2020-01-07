@@ -12,21 +12,21 @@ import java.rmi.server.UnicastRemoteObject;
 
 @Log
 @Getter
-public class NeighboursImpl extends UnicastRemoteObject implements Neighbours {
+public class NodeTopologyHandlerImpl extends UnicastRemoteObject implements NodeTopologyHandler {
 
     private NodeStub myself;
-    private NodeStub left;
-    private NodeStub right;
+    private NodeStub leftNeighbour;
+    private NodeStub rightNeighbour;
 
     @Builder
-    public NeighboursImpl(Node myself) throws RemoteException {
+    public NodeTopologyHandlerImpl(Node myself) throws RemoteException {
         this.myself = new NodeStub(myself);
     }
 
     /**
      * Fix the ring network topology.
      */
-    private void fixTopology() {
+    private void fixRingTopology() {
 
     }
 
@@ -43,20 +43,20 @@ public class NeighboursImpl extends UnicastRemoteObject implements Neighbours {
      * @return leader stub
      */
     public NodeStub getNewLeader() {
-        fixTopology();
+        fixRingTopology();
         NodeStub node = electNewLeader();
 
         return node;
     }
 
     @Override
-    public void setLeft(Node node) throws RemoteException {
-        left = new NodeStub(node);
+    public void setLeftNeighbour(Node node) throws RemoteException {
+        leftNeighbour = new NodeStub(node);
     }
 
     @Override
-    public void setRight(Node node) throws RemoteException {
-        right = new NodeStub(node);
+    public void setRightNeighbour(Node node) throws RemoteException {
+        rightNeighbour = new NodeStub(node);
     }
 
     @Override
@@ -67,7 +67,7 @@ public class NeighboursImpl extends UnicastRemoteObject implements Neighbours {
     @SneakyThrows
     @Override
     public String toString() {
-        return "NeighboursImpl{meId=" + myself.getId() + ", lId=" + left.getId() + ", rId=" + right.getId() + '}';
+        return "NeighboursImpl{meId=" + myself.getId() + ", lId=" + leftNeighbour.getId() + ", rId=" + rightNeighbour.getId() + '}';
     }
 
 

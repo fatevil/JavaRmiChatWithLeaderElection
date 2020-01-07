@@ -2,7 +2,7 @@ package cz.cvut.kozlovsky.network;
 
 import cz.cvut.kozlovsky.model.Node;
 import cz.cvut.kozlovsky.model.NodeImpl;
-import cz.cvut.kozlovsky.topology.Neighbours;
+import cz.cvut.kozlovsky.topology.NodeTopologyHandler;
 import lombok.Builder;
 import lombok.extern.java.Log;
 
@@ -86,9 +86,9 @@ class EstablishedNetworkImpl extends UnicastRemoteObject implements EstablishedN
      */
     public void fixNeighbours() throws RemoteException {
         if (nodes.size() == 1) {
-            Neighbours neighbours = leader.getNeighbours();
-            neighbours.setLeft(leader);
-            neighbours.setRight(leader);
+            NodeTopologyHandler nodeTopologyHandler = leader.getNodeTopologyHandler();
+            nodeTopologyHandler.setLeftNeighbour(leader);
+            nodeTopologyHandler.setRightNeighbour(leader);
 
         } else {
 
@@ -98,11 +98,11 @@ class EstablishedNetworkImpl extends UnicastRemoteObject implements EstablishedN
                 int following = (i + 1) % (updatedNodes.size() - 1);
                 int previous = (i - 1) % (updatedNodes.size() - 1);
 
-                Neighbours neighbours;
-                synchronized (neighbours = updatedNodes.get(i).getNeighbours()) {
+                NodeTopologyHandler nodeTopologyHandler;
+                synchronized (nodeTopologyHandler = updatedNodes.get(i).getNodeTopologyHandler()) {
 
-                    neighbours.setLeft(updatedNodes.get(previous));
-                    neighbours.setRight(updatedNodes.get(following));
+                    nodeTopologyHandler.setLeftNeighbour(updatedNodes.get(previous));
+                    nodeTopologyHandler.setRightNeighbour(updatedNodes.get(following));
                 }
             }
         }
