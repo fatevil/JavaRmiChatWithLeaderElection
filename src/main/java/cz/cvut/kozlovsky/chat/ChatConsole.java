@@ -75,20 +75,35 @@ public class ChatConsole {
         }
     }
 
+    /**
+     * Hands the message to the NetworkTracker.
+     * <p>
+     * If the connection is broken, ask for a fix until it's fixed.
+     *
+     * @param message
+     * @throws RemoteException
+     */
     public void sendMessage(String message) throws RemoteException {
         final String prefix = "==== " + node.getNickname() + ": ";
 
-        try {
-            // first check if master is still available
-            StatusCheck.checkAvailability(networkTracker, 50, TimeUnit.MILLISECONDS);
+        boolean isSend = false;
+        while (!isSend) {
+            try {
+                // first check if master is still available
+                StatusCheck.checkAvailability(networkTracker, 50, TimeUnit.MILLISECONDS);
 
-            // then send message
-            networkTracker.destributeChatMessage(prefix + message);
+                // then send message
+                networkTracker.destributeChatMessage(prefix + message);
+                isSend = true;
 
-        } catch (InterruptedException | ExecutionException | TimeoutException e) {
-            log.severe("==== GOT DISCONNECTED FROM MASTER ==== ");
-            e.printStackTrace();
+            } catch (InterruptedException | ExecutionException | TimeoutException e) {
+                log.severe("==== GOT DISCONNECTED FROM MASTER ==== ");
+                //e.printStackTrace();
+
+                node.fixNetwork();
+            }
         }
+
     }
 
 }

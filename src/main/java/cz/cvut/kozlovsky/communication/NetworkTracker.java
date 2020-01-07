@@ -3,7 +3,7 @@ package cz.cvut.kozlovsky.communication;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 
-public interface NetworkTracker extends Remote, Touchable {
+public interface NetworkTracker extends Remote, Reachable {
 
     void acceptMember(Node newComer) throws RemoteException;
 

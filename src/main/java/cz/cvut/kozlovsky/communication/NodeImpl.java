@@ -1,6 +1,7 @@
 package cz.cvut.kozlovsky.communication;
 
 import cz.cvut.kozlovsky.chat.ChatConsole;
+import cz.cvut.kozlovsky.topology.Neighbours;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -26,11 +27,13 @@ public class NodeImpl extends UnicastRemoteObject implements Node {
     private final int port;
     private final String nickname;
 
+    private Neighbours neighbours;
     private NetworkTracker networkTracker;
-    private boolean isLeader = false;
-
     private ChatConsole chatConsole;
 
+    /**
+     * Constructor for leaders.
+     */
     public NodeImpl(int id, String ipAddress, int port, String nickname) throws RemoteException, MalformedURLException, AlreadyBoundException {
         this.id = id;
         this.ipAddress = ipAddress;
@@ -41,6 +44,9 @@ public class NodeImpl extends UnicastRemoteObject implements Node {
         this.chatConsole = new ChatConsole(networkTracker, this);
     }
 
+    /**
+     * Constructor for connecting to existing node.
+     */
     public NodeImpl(int id, String ipAddress, int port, String nickname, String remoteAddress, int remotePort) throws RemoteException, NotBoundException {
         this.id = id;
         this.ipAddress = ipAddress;
@@ -53,15 +59,13 @@ public class NodeImpl extends UnicastRemoteObject implements Node {
 
     private void createNetwork() throws RemoteException, MalformedURLException, AlreadyBoundException {
         log.info("Register NetworkTracker at: " + "//" + this.getIpAddress() + ":" + this.getPort() + "/NetworkTracker");
-
-        this.isLeader = true;
         this.networkTracker = new NetworkTrackerImpl(this);
 
         final Registry registry = LocateRegistry.createRegistry(this.getPort());
         registry.bind("NetworkTracker", this.networkTracker);
     }
 
-    public void joinNetwork(String remoteAddress, int remotePort) throws RemoteException, NotBoundException {
+    private void joinNetwork(String remoteAddress, int remotePort) throws RemoteException, NotBoundException {
         log.info("Lookup NetworkTracker at: " + "//" + remoteAddress + ":" + remotePort + "/NetworkTracker");
 
         final Registry remoteRegistry = LocateRegistry.getRegistry(remotePort);
@@ -72,6 +76,11 @@ public class NodeImpl extends UnicastRemoteObject implements Node {
     @Override
     public void receiveChatMessage(String message) {
         chatConsole.receiveMessage(message);
+    }
+
+    @Override
+    public void fixNetwork() {
+        neighbours.getNewLeader();
     }
 
     public void startChatting() throws RemoteException {

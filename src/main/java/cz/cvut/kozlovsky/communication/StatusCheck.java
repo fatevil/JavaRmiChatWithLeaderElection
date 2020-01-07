@@ -11,29 +11,29 @@ public enum StatusCheck {
     /**
      * Check availability of network node.
      *
-     * @param touchable
+     * @param reachable
      * @param timeout
      * @param timeUnit
      * @throws InterruptedException
      * @throws ExecutionException
      * @throws TimeoutException
      */
-    public static void checkAvailability(Touchable touchable, int timeout, TimeUnit timeUnit) throws InterruptedException, ExecutionException, TimeoutException {
+    public static void checkAvailability(Reachable reachable, int timeout, TimeUnit timeUnit) throws InterruptedException, ExecutionException, TimeoutException {
         ExecutorService executors = Executors.newSingleThreadExecutor();
 
         // see if node is still available
-        Future<Boolean> f = executors.submit(new StatusCheckJob(touchable));
+        Future<Boolean> f = executors.submit(new StatusCheckJob(reachable));
         f.get(timeout, timeUnit);
     }
 
     @AllArgsConstructor
     private static class StatusCheckJob implements Callable<Boolean> {
-        private Touchable touchable;
+        private Reachable reachable;
 
         @Override
         public Boolean call() {
             try {
-                touchable.touch();
+                reachable.touch();
                 return true;
             } catch (RemoteException e) {
                 return false;
