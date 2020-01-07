@@ -72,6 +72,11 @@ public class ChatConsole extends UnicastRemoteObject implements MessageHandler<S
         }
     }
 
+    /**
+     * Prints chat message to standard output.
+     *
+     * @param message
+     */
     public void receiveMessage(String message) {
         if (receiving) {
             System.out.println(message);
@@ -79,9 +84,9 @@ public class ChatConsole extends UnicastRemoteObject implements MessageHandler<S
     }
 
     /**
-     * Hands the text to the NetworkTracker.
+     * Makes copy of currently active nodes (their proxy objects) and distributes given text with chat prefix.
      * <p>
-     * If the connection is broken, ask for a fix until it's fixed.
+     * If the connection to leader is broken, participate in fixing it until it's fixed.
      *
      * @param text
      * @throws RemoteException

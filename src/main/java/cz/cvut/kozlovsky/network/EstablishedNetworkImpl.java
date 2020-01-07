@@ -33,18 +33,25 @@ class EstablishedNetworkImpl extends UnicastRemoteObject implements EstablishedN
     @Builder
     public EstablishedNetworkImpl(NodeImpl leader) throws RemoteException {
         super();
-        log.info(String.format("Creating network with leader ID ", leader.getId()));
+        log.info(String.format("Creating network with leader ID %s", leader.getId()));
         this.leader = leader;
         acceptMember(leader);
     }
 
     @Override
     public void acceptMember(Node newComer) throws RemoteException {
-        log.info(String.format("Accepting node with ID ", newComer.getId()));
+        log.info(String.format("Accepting node with ID %s", newComer.getId()));
+
+        System.out.printf("==== ======== Accept" + newComer);
+        System.out.println("current size " + nodes.size());
 
         // no need for synchronized block for put, thanks to concurrent data structure
         nodes.put(newComer.getId(), newComer);
+
+        System.out.println("current size before fix " + nodes.size());
         fixTopology();
+
+        System.out.println("current size after fix " + nodes.size());
     }
 
     @Override
@@ -86,12 +93,21 @@ class EstablishedNetworkImpl extends UnicastRemoteObject implements EstablishedN
         } else {
 
             List<Node> updatedNodes = new ArrayList<>(nodes.values());
-            for (int i = 0; i < updatedNodes.size(); i++) {
+
+            NodeTopologyHandler nodeTopologyHandler;
+
+            // member with index 0 separately
+            nodeTopologyHandler = updatedNodes.get(0).getNodeTopologyHandler();
+
+            nodeTopologyHandler.setLeftNeighbour(updatedNodes.get(updatedNodes.size() - 1));
+            nodeTopologyHandler.setRightNeighbour(updatedNodes.get(1));
+
+            // the rest of the nodes
+            for (int i = 1; i < updatedNodes.size(); i++) {
 
                 int following = (i + 1) % (updatedNodes.size() - 1);
                 int previous = (i - 1) % (updatedNodes.size() - 1);
 
-                NodeTopologyHandler nodeTopologyHandler;
                 synchronized (nodeTopologyHandler = updatedNodes.get(i).getNodeTopologyHandler()) {
 
                     nodeTopologyHandler.setLeftNeighbour(updatedNodes.get(previous));
