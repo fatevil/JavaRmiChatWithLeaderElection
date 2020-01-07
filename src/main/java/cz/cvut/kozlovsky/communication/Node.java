@@ -1,7 +1,6 @@
 package cz.cvut.kozlovsky.communication;
 
-import cz.cvut.kozlovsky.chat.ChatConsole;
-import cz.cvut.kozlovsky.chat.MessageHandler;
+import cz.cvut.kozlovsky.network.MessageHandler;
 import cz.cvut.kozlovsky.network.Reachable;
 import cz.cvut.kozlovsky.topology.Neighbours;
 

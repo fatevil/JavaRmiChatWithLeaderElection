@@ -1,8 +1,8 @@
 package cz.cvut.kozlovsky.chat;
 
-import com.sun.xml.internal.ws.wsdl.writer.document.Message;
 import cz.cvut.kozlovsky.network.EstablishedNetwork;
 import cz.cvut.kozlovsky.communication.Node;
+import cz.cvut.kozlovsky.network.MessageHandler;
 import cz.cvut.kozlovsky.network.StatusCheck;
 import lombok.extern.java.Log;
 
@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 @Log
-public class ChatConsole extends UnicastRemoteObject implements MessageHandler {
+public class ChatConsole extends UnicastRemoteObject implements MessageHandler<String> {
 
     private boolean receiving;
     private Node node;
