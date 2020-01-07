@@ -1,4 +1,4 @@
-package cz.cvut.kozlovsky.communication;
+package cz.cvut.kozlovsky.model;
 
 import cz.cvut.kozlovsky.network.MessageHandler;
 import cz.cvut.kozlovsky.network.Reachable;

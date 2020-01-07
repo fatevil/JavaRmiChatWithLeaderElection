@@ -1,6 +1,5 @@
-package cz.cvut.kozlovsky.dto;
+package cz.cvut.kozlovsky.model;
 
-import cz.cvut.kozlovsky.communication.Node;
 import lombok.Data;
 
 import java.rmi.RemoteException;

@@ -1,7 +1,7 @@
 package cz.cvut.kozlovsky.topology;
 
-import cz.cvut.kozlovsky.communication.Node;
-import cz.cvut.kozlovsky.dto.NodeStub;
+import cz.cvut.kozlovsky.model.Node;
+import cz.cvut.kozlovsky.model.NodeStub;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.SneakyThrows;

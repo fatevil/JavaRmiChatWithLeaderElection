@@ -1,7 +1,7 @@
 package cz.cvut.kozlovsky.network;
 
-import cz.cvut.kozlovsky.communication.Node;
-import cz.cvut.kozlovsky.communication.NodeImpl;
+import cz.cvut.kozlovsky.model.Node;
+import cz.cvut.kozlovsky.model.NodeImpl;
 import cz.cvut.kozlovsky.topology.Neighbours;
 import lombok.Builder;
 import lombok.extern.java.Log;

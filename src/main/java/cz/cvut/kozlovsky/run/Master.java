@@ -1,6 +1,6 @@
 package cz.cvut.kozlovsky.run;
 
-import cz.cvut.kozlovsky.communication.NodeImpl;
+import cz.cvut.kozlovsky.model.NodeImpl;
 
 import java.net.MalformedURLException;
 import java.rmi.AlreadyBoundException;

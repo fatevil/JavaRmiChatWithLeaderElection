@@ -1,7 +1,7 @@
 package cz.cvut.kozlovsky.chat;
 
 import cz.cvut.kozlovsky.network.EstablishedNetwork;
-import cz.cvut.kozlovsky.communication.Node;
+import cz.cvut.kozlovsky.model.Node;
 import cz.cvut.kozlovsky.network.MessageHandler;
 import cz.cvut.kozlovsky.network.StatusCheck;
 import lombok.extern.java.Log;
