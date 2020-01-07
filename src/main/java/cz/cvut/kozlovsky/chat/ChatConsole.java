@@ -96,7 +96,7 @@ public class ChatConsole extends UnicastRemoteObject implements MessageHandler<S
                 // first check if master is still available
                 StatusCheck.checkAvailability(establishedNetwork, 50, TimeUnit.MILLISECONDS);
 
-                // then make copy of the curretly active nodes
+                // then make copy of the currently active nodes
                 nodes = establishedNetwork.getActiveNodes();
 
             } catch (InterruptedException | ExecutionException | TimeoutException e) {
