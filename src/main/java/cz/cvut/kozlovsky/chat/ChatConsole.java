@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -78,25 +79,25 @@ public class ChatConsole extends UnicastRemoteObject implements MessageHandler<S
     }
 
     /**
-     * Hands the message to the NetworkTracker.
+     * Hands the text to the NetworkTracker.
      * <p>
      * If the connection is broken, ask for a fix until it's fixed.
      *
-     * @param message
+     * @param text
      * @throws RemoteException
      */
-    public void sendMessage(String message) throws RemoteException {
+    public void sendMessage(String text) throws RemoteException {
         final String prefix = "==== " + node.getNickname() + ": ";
+        final String message = prefix + text;
 
-        boolean isSend = false;
-        while (!isSend) {
+        List<Node> nodes = null;
+        while (nodes == null) {
             try {
                 // first check if master is still available
                 StatusCheck.checkAvailability(establishedNetwork, 50, TimeUnit.MILLISECONDS);
 
-                // then send message
-                establishedNetwork.destributeChatMessage(prefix + message);
-                isSend = true;
+                // then make copy of the curretly active nodes
+                nodes = establishedNetwork.getActiveNodes();
 
             } catch (InterruptedException | ExecutionException | TimeoutException e) {
                 log.severe("==== GOT DISCONNECTED FROM MASTER ==== ");
@@ -106,6 +107,12 @@ public class ChatConsole extends UnicastRemoteObject implements MessageHandler<S
             }
         }
 
+        nodes.forEach(n -> {
+            try {
+                n.getChatConsole().receiveMessage(message);
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+        });
     }
-
 }

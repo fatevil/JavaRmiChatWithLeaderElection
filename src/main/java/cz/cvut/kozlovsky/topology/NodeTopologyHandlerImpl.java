@@ -27,7 +27,13 @@ public class NodeTopologyHandlerImpl extends UnicastRemoteObject implements Node
      * Fix the ring network topology.
      */
     private void fixRingTopology() {
+        // check if i have left and right
+        // if not send "topology not okay - looking for left or right"
+        // if okay send okay
 
+        // if previously okay and got my own message, start electing
+
+        // if previously not okay and got some else not okay, assign him
     }
 
     /**

@@ -44,20 +44,13 @@ class EstablishedNetworkImpl extends UnicastRemoteObject implements EstablishedN
 
         // no need for synchronized block for put, thanks to concurrent data structure
         nodes.put(newComer.getId(), newComer);
-        fixNeighbours();
+        fixTopology();
     }
 
     @Override
-    public void destributeChatMessage(String chatMessage) throws RemoteException {
+    public List<Node> getActiveNodes() throws RemoteException {
         checkEveryoneAvailable();
-
-        nodes.forEach((id, node) -> {
-            try {
-                node.getChatConsole().receiveMessage(chatMessage);
-            } catch (RemoteException e) {
-                e.printStackTrace();
-            }
-        });
+        return new ArrayList<>(nodes.values());
     }
 
     private void checkEveryoneAvailable() throws RemoteException {
@@ -78,13 +71,13 @@ class EstablishedNetworkImpl extends UnicastRemoteObject implements EstablishedN
             }
         });
 
-        if (needNeighboursFix[0]) fixNeighbours();
+        if (needNeighboursFix[0]) fixTopology();
     }
 
     /**
      * Reassign left and right neighbour to every available node.
      */
-    public void fixNeighbours() throws RemoteException {
+    public void fixTopology() throws RemoteException {
         if (nodes.size() == 1) {
             NodeTopologyHandler nodeTopologyHandler = leader.getNodeTopologyHandler();
             nodeTopologyHandler.setLeftNeighbour(leader);
