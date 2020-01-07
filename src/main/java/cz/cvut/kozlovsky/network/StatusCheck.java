@@ -18,12 +18,18 @@ public enum StatusCheck {
      * @throws ExecutionException
      * @throws TimeoutException
      */
-    public static void checkAvailability(Reachable reachable, int timeout, TimeUnit timeUnit) throws InterruptedException, ExecutionException, TimeoutException {
+    public static boolean isAvaliable(Reachable reachable, int timeout, TimeUnit timeUnit) {
         ExecutorService executors = Executors.newSingleThreadExecutor();
 
         // see if node is still available
         Future<Boolean> f = executors.submit(new StatusCheckJob(reachable));
-        f.get(timeout, timeUnit);
+        try {
+            f.get(timeout, timeUnit);
+
+            return true;
+        } catch (TimeoutException | InterruptedException | ExecutionException e) {
+            return false;
+        }
     }
 
     @AllArgsConstructor

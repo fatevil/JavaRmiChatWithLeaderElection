@@ -44,6 +44,7 @@ public class NodeImpl extends UnicastRemoteObject implements Node {
         this.port = port;
         this.nickname = nickname;
         this.nodeTopologyHandler = new NodeTopologyHandlerImpl(this);
+        createTopologyHandlerEndpoint();
 
         createEstablishedNetwork();
         this.chatConsole = new ChatConsole(establishedNetwork, this);
@@ -53,12 +54,13 @@ public class NodeImpl extends UnicastRemoteObject implements Node {
     /**
      * Constructor for connecting to existing node.
      */
-    public NodeImpl(int id, String ipAddress, int port, String nickname, String remoteAddress, int remotePort) throws RemoteException, NotBoundException, MalformedURLException {
+    public NodeImpl(int id, String ipAddress, int port, String nickname, String remoteAddress, int remotePort) throws RemoteException, NotBoundException, MalformedURLException, AlreadyBoundException {
         this.id = id;
         this.ipAddress = ipAddress;
         this.port = port;
         this.nickname = nickname;
         this.nodeTopologyHandler = new NodeTopologyHandlerImpl(this);
+        createTopologyHandlerEndpoint();
 
         joinEstablishedNetwork(remoteAddress, remotePort);
         this.chatConsole = new ChatConsole(establishedNetwork, this);
@@ -69,7 +71,7 @@ public class NodeImpl extends UnicastRemoteObject implements Node {
         log.info("Register NetworkTracker at: " + "//" + this.getIpAddress() + ":" + this.getPort() + "/NetworkTracker");
         this.establishedNetwork = new EstablishedNetworkImpl(this);
 
-        final Registry registry = LocateRegistry.createRegistry(this.getPort());
+        final Registry registry = LocateRegistry.getRegistry(this.getPort());
         registry.bind("NetworkTracker", this.establishedNetwork);
     }
 
@@ -80,15 +82,15 @@ public class NodeImpl extends UnicastRemoteObject implements Node {
         establishedNetwork.acceptMember(this);
     }
 
-    private void createMessageEndpoint() throws RemoteException, MalformedURLException, AlreadyBoundException {
-        log.info("Create Message endpoint at: " + "//" + this.getIpAddress() + ":" + this.getPort() + "/Message");
+    private void createTopologyHandlerEndpoint() throws RemoteException, MalformedURLException, AlreadyBoundException {
+        log.info("Create Message endpoint at: " + "//" + this.getIpAddress() + ":" + this.getPort() + "/TopologyHandler");
 
         final Registry registry = LocateRegistry.createRegistry(this.getPort());
-        registry.bind("Message", this.nodeTopologyHandler);
+        registry.bind("TopologyHandler", this.nodeTopologyHandler);
     }
 
     @Override
-    public void fixNetwork() throws RemoteException {
+    public void fixNetwork() throws RemoteException, MalformedURLException, NotBoundException {
         nodeTopologyHandler.getNewLeader();
     }
 

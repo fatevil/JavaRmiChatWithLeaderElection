@@ -9,6 +9,8 @@ import lombok.extern.java.Log;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.List;
@@ -41,7 +43,7 @@ public class ChatConsole extends UnicastRemoteObject implements MessageHandler<S
         receiving = true;
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 
-        sendMessage("Hi to everyone, glad to be joining the chatter! All ready gossip!");
+        //sendMessage("Hi to everyone, glad to be joining the chatter! All ready gossip!");
         while (true) {
             String line;
             try {
@@ -65,7 +67,7 @@ public class ChatConsole extends UnicastRemoteObject implements MessageHandler<S
                         break;
                 }
 
-            } catch (IOException e) {
+            } catch (IOException | NotBoundException e) {
                 e.printStackTrace();
             }
 
@@ -91,26 +93,29 @@ public class ChatConsole extends UnicastRemoteObject implements MessageHandler<S
      * @param text
      * @throws RemoteException
      */
-    public void sendMessage(String text) throws RemoteException {
+    public void sendMessage(String text) throws RemoteException, MalformedURLException, NotBoundException {
         final String prefix = "==== " + node.getNickname() + ": ";
         final String message = prefix + text;
 
+        node.fixNetwork();
+
         List<Node> nodes = null;
-        while (nodes == null) {
-            try {
-                // first check if master is still available
-                StatusCheck.checkAvailability(establishedNetwork, 50, TimeUnit.MILLISECONDS);
+        //while (nodes == null) {
 
-                // then make copy of the currently active nodes
-                nodes = establishedNetwork.getActiveNodes();
+        // first check if master is still available
+        boolean isAvailable = StatusCheck.isAvaliable(establishedNetwork, 50, TimeUnit.MILLISECONDS);
 
-            } catch (InterruptedException | ExecutionException | TimeoutException e) {
-                log.severe("==== GOT DISCONNECTED FROM MASTER ==== ");
-                //e.printStackTrace();
+        // then make copy of the currently active nodes
+        nodes = establishedNetwork.getActiveNodes();
 
-                node.fixNetwork();
-            }
+        if (!isAvailable) {
+            log.severe("==== GOT DISCONNECTED FROM MASTER ==== ");
+            //e.printStackTrace();
+
+            node.fixNetwork();
+
         }
+        //}
 
         nodes.forEach(n -> {
             try {

@@ -3,6 +3,7 @@ package cz.cvut.kozlovsky.model;
 import lombok.Data;
 
 import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
 
 @Data
 public class NodeStub {

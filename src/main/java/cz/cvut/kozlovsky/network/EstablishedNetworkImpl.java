@@ -65,15 +65,19 @@ class EstablishedNetworkImpl extends UnicastRemoteObject implements EstablishedN
 
         final boolean[] needNeighboursFix = {false};  // lambda closure hack
         nodes.forEach((id, node) -> {
+
             try {
                 if (id == leader.getId()) return;
 
-                StatusCheck.checkAvailability(node, 50, TimeUnit.MILLISECONDS);
-            } catch (TimeoutException e) {
-                nodes.remove(id);
-                needNeighboursFix[0] = true;
-                log.info("Node with ID " + id + " not reachable! REMOVED FROM CHAT.");
-            } catch (InterruptedException | ExecutionException | RemoteException e) {
+                boolean isAvailable = StatusCheck.isAvaliable(node, 50, TimeUnit.MILLISECONDS);
+                if (!isAvailable) {
+                    nodes.remove(id);
+                    needNeighboursFix[0] = true;
+                    log.info("Node with ID " + id + " not reachable! REMOVED FROM CHAT.");
+                }
+
+            } catch (RemoteException e) {
+                // should not happen (leader is always reachable)
                 e.printStackTrace();
             }
         });

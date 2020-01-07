@@ -31,7 +31,7 @@ public class Master {
 
                 try {
                     NodeImpl nodeImpl = new NodeImpl(id, ipAddress, port, name, remoteAddress, remotePort);
-                } catch (RemoteException | NotBoundException | MalformedURLException e) {
+                } catch (RemoteException | NotBoundException | MalformedURLException | AlreadyBoundException e) {
                     e.printStackTrace();
                 }
             }
