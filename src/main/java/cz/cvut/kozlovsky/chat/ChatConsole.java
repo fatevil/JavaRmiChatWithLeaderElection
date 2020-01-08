@@ -4,6 +4,7 @@ import cz.cvut.kozlovsky.network.EstablishedNetwork;
 import cz.cvut.kozlovsky.model.Node;
 import cz.cvut.kozlovsky.network.MessageHandler;
 import cz.cvut.kozlovsky.network.StatusCheck;
+import lombok.SneakyThrows;
 import lombok.extern.java.Log;
 
 import java.io.BufferedReader;
@@ -64,7 +65,8 @@ public class ChatConsole extends UnicastRemoteObject implements MessageHandler<S
                         break;
                     case "REGISTRY":
                         final Registry registry = LocateRegistry.getRegistry(node.getPort());
-                        System.out.println("== REGISTRY ==");;
+                        System.out.println("== REGISTRY ==");
+                        ;
                         for (String s : registry.list()) {
                             System.out.println(s);
                         }
@@ -103,29 +105,28 @@ public class ChatConsole extends UnicastRemoteObject implements MessageHandler<S
      * @param text
      * @throws RemoteException
      */
+    @SneakyThrows
     public void sendMessage(String text) throws RemoteException, MalformedURLException, NotBoundException {
         final String prefix = "==== " + node.getNickname() + ": ";
         final String message = prefix + text;
 
         List<Node> nodes = null;
-        //while (nodes == null) {
+        while (nodes == null) {
 
-        // first check if master is still available
-        boolean isAvailable = StatusCheck.isAvaliable(establishedNetwork, 50, TimeUnit.MILLISECONDS);
+            // first check if master is still available
+            boolean isAvailable = StatusCheck.isAvaliable(establishedNetwork, 50, TimeUnit.MILLISECONDS);
 
-        // then make copy of the currently active nodes
+            // then make copy of the currently active nodes
 
-
-        if (!isAvailable) {
-            log.severe("==== GOT DISCONNECTED FROM MASTER ==== ");
-            node.fixNetwork();
-        } else {
-            nodes = establishedNetwork.getActiveNodes();
+            if (!isAvailable) {
+                log.severe("==== GOT DISCONNECTED FROM MASTER ==== ");
+                node.fixNetwork();
+                Thread.sleep(1000);
+            } else {
+                nodes = establishedNetwork.getActiveNodes();
+            }
         }
-        //}
 
-        for (Node n : nodes) {
-            n.getChatConsole().receiveMessage(message);
-        }
+
     }
 }

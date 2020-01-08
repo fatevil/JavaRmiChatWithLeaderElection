@@ -4,7 +4,6 @@ import cz.cvut.kozlovsky.model.Node;
 import cz.cvut.kozlovsky.model.NodeStub;
 import lombok.Builder;
 import lombok.Data;
-import lombok.SneakyThrows;
 import lombok.extern.java.Log;
 
 import java.net.MalformedURLException;
@@ -12,6 +11,7 @@ import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.Stack;
 
 import static cz.cvut.kozlovsky.topology.TopologyMessageDirection.LEFT;
 import static cz.cvut.kozlovsky.topology.TopologyMessageDirection.RIGHT;
@@ -29,6 +29,7 @@ public class NodeTopologyHandlerImpl extends UnicastRemoteObject implements Node
     private LeaderElectionStrategy leaderElectionStrategy;
 
     private boolean fixInProgress = false;
+    private Stack<TopologyMessage> messageQueue = new Stack<>();
 
     @Builder
     public NodeTopologyHandlerImpl(Node myself) throws RemoteException {
@@ -99,24 +100,11 @@ public class NodeTopologyHandlerImpl extends UnicastRemoteObject implements Node
     }
 
     /**
-     * Use the Hirschberg–Sinclair algorithm for electing new leder. Elected leader will create new Network.
+     * Participates in fixing the ring topology, if broken. Proposes leader election.
      */
-    private NodeStub electNewLeader() {
-
-
-        return null;
-    }
-
-    /**
-     * Fixes network topology (connects disconnected nodes) and participates in electing new leader.
-     *
-     * @return leader stub
-     */
-    public NodeStub getNewLeader() throws RemoteException, MalformedURLException, NotBoundException {
+    public void electNewLeader() throws RemoteException, NotBoundException, MalformedURLException {
         fixRingTopology();
-        NodeStub node = electNewLeader();
-
-        return node;
+        leaderElectionStrategy.startElection();
     }
 
     @Override
@@ -129,32 +117,44 @@ public class NodeTopologyHandlerImpl extends UnicastRemoteObject implements Node
                     rightNeighbour = new NodeStub(message.getOriginId(), message.getOriginIpAddress(), message.getOriginPort());
                     fixInProgress = false;
 
+                    log.info("Fixed RIGHT neighbour with ID " + message.getOriginId());
+                    solveQueuedMessages();
                 } else if (leftNeighbour == null) {
                     leftNeighbour = new NodeStub(message.getOriginId(), message.getOriginIpAddress(), message.getOriginPort());
                     fixInProgress = false;
 
+                    log.info("Fixed LEFT neighbour with ID " + message.getOriginId());
+                    solveQueuedMessages();
+                    leaderElectionStrategy.startElection();
                 } else {
-                    System.out.println(message);
+                    log.info("Passing further message neighbour inquiry from ID  " + message.getOriginId());
                     sendMessage(message);
+                    leaderElectionStrategy.startElection();
                 }
                 break;
 
             case START_ELECTION:
-                leaderElectionStrategy.receiveMessage(message);
+                if (fixInProgress) {
+                    messageQueue.push(message);
+                } else {
+                    leaderElectionStrategy.receiveMessage(message);
+                }
+
+        }
+    }
+
+    private void solveQueuedMessages() throws RemoteException, NotBoundException, MalformedURLException {
+        while (!messageQueue.isEmpty()) {
+            receiveMessage(messageQueue.pop());
         }
     }
 
     @Override
     public void sendMessage(TopologyMessage message) throws RemoteException, MalformedURLException, NotBoundException {
-        NodeTopologyHandler handler;
         if (message.getDirection().equals(LEFT)) {
-            //handler = getTopologyHandler(leftNeighbour);
-            //handler.receiveMessage(message);
             leftNeighbour.getTopologyHandler().receiveMessage(message);
 
         } else {
-            //handler = getTopologyHandler(rightNeighbour);
-            //handler.receiveMessage(message);
             rightNeighbour.getTopologyHandler().receiveMessage(message);
         }
     }

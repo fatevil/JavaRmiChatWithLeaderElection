@@ -91,7 +91,7 @@ public class NodeImpl extends UnicastRemoteObject implements Node {
 
     @Override
     public void fixNetwork() throws RemoteException, MalformedURLException, NotBoundException {
-        nodeTopologyHandler.getNewLeader();
+        nodeTopologyHandler.electNewLeader();
     }
 }
 

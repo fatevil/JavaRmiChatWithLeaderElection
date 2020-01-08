@@ -24,6 +24,6 @@ public interface NodeTopologyHandler extends Reachable, Remote, MessageHandler<T
 
     void setMyself(Node node) throws RemoteException;
 
-    NodeStub getNewLeader() throws RemoteException, MalformedURLException, NotBoundException;
+    void electNewLeader() throws RemoteException, MalformedURLException, NotBoundException;
 
 }
