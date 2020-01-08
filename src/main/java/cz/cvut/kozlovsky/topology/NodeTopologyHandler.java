@@ -6,6 +6,7 @@ import cz.cvut.kozlovsky.network.MessageHandler;
 import cz.cvut.kozlovsky.network.Reachable;
 
 import java.net.MalformedURLException;
+import java.rmi.AlreadyBoundException;
 import java.rmi.NotBoundException;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
@@ -24,6 +25,8 @@ public interface NodeTopologyHandler extends Reachable, Remote, MessageHandler<T
 
     void setMyself(Node node) throws RemoteException;
 
-    void electNewLeader() throws RemoteException, MalformedURLException, NotBoundException;
+    void requestNetworkFixed() throws RemoteException, MalformedURLException, NotBoundException, AlreadyBoundException;
+
+    Node getNode() throws RemoteException;
 
 }

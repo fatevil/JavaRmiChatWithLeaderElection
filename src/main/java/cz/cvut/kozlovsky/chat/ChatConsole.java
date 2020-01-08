@@ -1,26 +1,27 @@
 package cz.cvut.kozlovsky.chat;
 
-import cz.cvut.kozlovsky.network.EstablishedNetwork;
 import cz.cvut.kozlovsky.model.Node;
+import cz.cvut.kozlovsky.network.EstablishedNetwork;
 import cz.cvut.kozlovsky.network.MessageHandler;
 import cz.cvut.kozlovsky.network.StatusCheck;
+import lombok.Data;
 import lombok.extern.java.Log;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
+import java.rmi.AlreadyBoundException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 @Log
+@Data
 public class ChatConsole extends UnicastRemoteObject implements MessageHandler<String> {
 
     private boolean receiving;
@@ -78,7 +79,7 @@ public class ChatConsole extends UnicastRemoteObject implements MessageHandler<S
                         break;
                 }
 
-            } catch (IOException | NotBoundException e) {
+            } catch (IOException | NotBoundException | AlreadyBoundException e) {
                 e.printStackTrace();
             }
 
@@ -104,7 +105,7 @@ public class ChatConsole extends UnicastRemoteObject implements MessageHandler<S
      * @param text
      * @throws RemoteException
      */
-    public void sendMessage(String text) throws RemoteException, MalformedURLException, NotBoundException {
+    public void sendMessage(String text) throws RemoteException, MalformedURLException, NotBoundException, AlreadyBoundException {
         final String prefix = "==== " + node.getNickname() + ": ";
         final String message = prefix + text;
 

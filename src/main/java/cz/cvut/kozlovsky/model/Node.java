@@ -5,6 +5,7 @@ import cz.cvut.kozlovsky.network.Reachable;
 import cz.cvut.kozlovsky.topology.NodeTopologyHandler;
 
 import java.net.MalformedURLException;
+import java.rmi.AlreadyBoundException;
 import java.rmi.NotBoundException;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
@@ -23,6 +24,12 @@ public interface Node extends Remote, Reachable {
 
     MessageHandler getChatConsole() throws RemoteException;
 
-    void fixNetwork() throws RemoteException, MalformedURLException, NotBoundException;
+    void fixNetwork() throws RemoteException, MalformedURLException, NotBoundException, AlreadyBoundException;
+
+    void createEstablishedNetwork() throws RemoteException, MalformedURLException, AlreadyBoundException;
+
+    void joinEstablishedNetwork(String remoteAddress, int remotePort) throws RemoteException, NotBoundException, MalformedURLException;
+
+    void reassignChatConsole() throws RemoteException;
 
 }

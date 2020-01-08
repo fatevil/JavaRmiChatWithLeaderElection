@@ -1,12 +1,14 @@
 package cz.cvut.kozlovsky.topology;
 
 import cz.cvut.kozlovsky.model.Node;
+import cz.cvut.kozlovsky.model.NodeImpl;
 import cz.cvut.kozlovsky.model.NodeStub;
 import lombok.Builder;
 import lombok.Data;
 import lombok.extern.java.Log;
 
 import java.net.MalformedURLException;
+import java.rmi.AlreadyBoundException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
@@ -22,6 +24,8 @@ import static cz.cvut.kozlovsky.topology.TopologyMessagePurpose.TOPOLOGY_NOT_OKA
 @Data
 public class NodeTopologyHandlerImpl extends UnicastRemoteObject implements NodeTopologyHandler {
 
+    private final Node node;
+
     private NodeStub myself;
     private NodeStub leftNeighbour;
     private NodeStub rightNeighbour;
@@ -32,23 +36,24 @@ public class NodeTopologyHandlerImpl extends UnicastRemoteObject implements Node
     private Stack<TopologyMessage> messageQueue = new Stack<>();
 
     @Builder
-    public NodeTopologyHandlerImpl(Node myself) throws RemoteException {
-        this.myself = new NodeStub(myself);
+    public NodeTopologyHandlerImpl(Node node) throws RemoteException {
+        this.node = node;
+        this.myself = new NodeStub(node);
         this.leaderElectionStrategy = new HirschbergSinclairElectionStrategy(this);
+    }
+
+    /**
+     * Participates in fixing the ring topology, if broken. Proposes leader election.
+     */
+    public void requestNetworkFixed() throws RemoteException, NotBoundException, MalformedURLException, AlreadyBoundException {
+        fixRingTopology();
+        leaderElectionStrategy.startElection();
     }
 
     /**
      * Fix the ring network topology.
      */
-    private void fixRingTopology() throws RemoteException, MalformedURLException, NotBoundException {
-        // check if i have left and right
-        // if not send "topology not okay - looking for left or right"
-        // if okay send okay
-
-        // if previously okay and got my own message, start electing
-
-        // if previously not okay and got some else not okay, assign him
-
+    private void fixRingTopology() throws RemoteException, MalformedURLException, NotBoundException, AlreadyBoundException {
         if (fixInProgress) {
             return;
         }
@@ -91,16 +96,8 @@ public class NodeTopologyHandlerImpl extends UnicastRemoteObject implements Node
         }
     }
 
-    /**
-     * Participates in fixing the ring topology, if broken. Proposes leader election.
-     */
-    public void electNewLeader() throws RemoteException, NotBoundException, MalformedURLException {
-        fixRingTopology();
-        leaderElectionStrategy.startElection();
-    }
-
     @Override
-    public void receiveMessage(TopologyMessage message) throws RemoteException, MalformedURLException, NotBoundException {
+    public void receiveMessage(TopologyMessage message) throws RemoteException, MalformedURLException, NotBoundException, AlreadyBoundException {
         fixRingTopology();
 
         switch (message.getPurpose()) {
@@ -127,6 +124,7 @@ public class NodeTopologyHandlerImpl extends UnicastRemoteObject implements Node
                 break;
 
             case START_ELECTION:
+            case ELECTED:
             case ELECT:
                 if (fixInProgress) {
                     System.out.println("= push to stack");
@@ -139,14 +137,14 @@ public class NodeTopologyHandlerImpl extends UnicastRemoteObject implements Node
         }
     }
 
-    private void solveQueuedMessages() throws RemoteException, NotBoundException, MalformedURLException {
+    private void solveQueuedMessages() throws RemoteException, NotBoundException, MalformedURLException, AlreadyBoundException {
         while (!messageQueue.isEmpty()) {
             receiveMessage(messageQueue.pop());
         }
     }
 
     @Override
-    public void sendMessage(TopologyMessage message) throws RemoteException, MalformedURLException, NotBoundException {
+    public void sendMessage(TopologyMessage message) throws RemoteException, MalformedURLException, NotBoundException, AlreadyBoundException {
         if (message.getDirection().equals(LEFT)) {
             if (leftNeighbour.getTopologyHandler() == null) {
                 leftNeighbour.setTopologyHandler(getTopologyHandler(leftNeighbour));

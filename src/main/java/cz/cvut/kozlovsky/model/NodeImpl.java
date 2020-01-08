@@ -67,7 +67,7 @@ public class NodeImpl extends UnicastRemoteObject implements Node {
         this.chatConsole.startChatting();
     }
 
-    private void createEstablishedNetwork() throws RemoteException, MalformedURLException, AlreadyBoundException {
+    public void createEstablishedNetwork() throws RemoteException, MalformedURLException, AlreadyBoundException {
         log.info("Register NetworkTracker at: " + "//" + this.getIpAddress() + ":" + this.getPort() + "/NetworkTracker");
         this.establishedNetwork = new EstablishedNetworkImpl(this);
 
@@ -75,7 +75,7 @@ public class NodeImpl extends UnicastRemoteObject implements Node {
         registry.bind("NetworkTracker", this.establishedNetwork);
     }
 
-    private void joinEstablishedNetwork(String remoteAddress, int remotePort) throws RemoteException, NotBoundException, MalformedURLException {
+    public void joinEstablishedNetwork(String remoteAddress, int remotePort) throws RemoteException, NotBoundException, MalformedURLException {
         log.info("Lookup NetworkTracker at: " + "//" + remoteAddress + ":" + remotePort + "/NetworkTracker");
 
         establishedNetwork = (EstablishedNetwork) Naming.lookup("//" + remoteAddress + ":" + remotePort + "/NetworkTracker");
@@ -90,8 +90,12 @@ public class NodeImpl extends UnicastRemoteObject implements Node {
     }
 
     @Override
-    public void fixNetwork() throws RemoteException, MalformedURLException, NotBoundException {
-        nodeTopologyHandler.electNewLeader();
+    public void fixNetwork() throws RemoteException, MalformedURLException, NotBoundException, AlreadyBoundException {
+        nodeTopologyHandler.requestNetworkFixed();
+    }
+
+    public void reassignChatConsole() {
+        chatConsole.setEstablishedNetwork(establishedNetwork);
     }
 }
 
