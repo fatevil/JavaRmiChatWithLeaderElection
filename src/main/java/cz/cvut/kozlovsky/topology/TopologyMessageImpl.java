@@ -11,7 +11,8 @@ import java.rmi.server.UnicastRemoteObject;
 public class TopologyMessageImpl extends UnicastRemoteObject implements TopologyMessage {
 
     private final TopologyMessagePurpose purpose;
-    private final TopologyMessageDirection direction;
+    private TopologyMessageDirection direction;
+    private boolean changedDirection;
 
     private int distanceSoFar;
     private int phase;
@@ -21,12 +22,14 @@ public class TopologyMessageImpl extends UnicastRemoteObject implements Topology
     private final int originPort;
 
     @Builder
-    public TopologyMessageImpl(TopologyMessagePurpose purpose, TopologyMessageDirection direction, NodeStub originalNode) throws RemoteException {
+    public TopologyMessageImpl(TopologyMessagePurpose purpose, TopologyMessageDirection direction, NodeStub originalNode, int phase, int distanceSoFar) throws RemoteException {
         this.purpose = purpose;
         this.direction = direction;
         this.originId = originalNode.getId();
         this.originIpAddress = originalNode.getIpAddress();
         this.originPort = originalNode.getPort();
+        this.distanceSoFar = distanceSoFar;
+        this.phase = phase;
     }
 
     @Builder
@@ -40,5 +43,8 @@ public class TopologyMessageImpl extends UnicastRemoteObject implements Topology
         this.originPort = originalNode.getPort();
     }
 
-
+    @Override
+    public boolean getChangedDirection() {
+        return changedDirection;
+    }
 }

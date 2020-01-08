@@ -12,5 +12,4 @@ public interface LeaderElectionStrategy {
 
     void receiveMessage(TopologyMessage message) throws RemoteException, MalformedURLException, NotBoundException;
 
-    void sendMessage(TopologyMessage message) throws RemoteException, MalformedURLException, NotBoundException;
 }

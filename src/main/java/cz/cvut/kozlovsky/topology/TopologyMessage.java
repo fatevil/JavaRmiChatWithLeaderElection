@@ -14,4 +14,16 @@ public interface TopologyMessage extends Remote {
     TopologyMessagePurpose getPurpose() throws RemoteException;
 
     TopologyMessageDirection getDirection() throws RemoteException;
+
+    int getPhase() throws RemoteException;
+
+    int getDistanceSoFar() throws RemoteException;
+
+    void setDistanceSoFar(int distanceSoFar) throws RemoteException;
+
+    void setDirection(TopologyMessageDirection direction) throws RemoteException;
+
+    boolean getChangedDirection() throws RemoteException;
+
+    void setChangedDirection(boolean changedDirection) throws RemoteException;
 }

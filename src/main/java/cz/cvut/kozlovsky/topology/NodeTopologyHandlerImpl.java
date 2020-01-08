@@ -127,12 +127,14 @@ public class NodeTopologyHandlerImpl extends UnicastRemoteObject implements Node
                 break;
 
             case START_ELECTION:
+            case ELECT:
                 if (fixInProgress) {
                     System.out.println("= push to stack");
                     messageQueue.push(message);
                 } else {
                     leaderElectionStrategy.receiveMessage(message);
                 }
+                break;
 
         }
     }

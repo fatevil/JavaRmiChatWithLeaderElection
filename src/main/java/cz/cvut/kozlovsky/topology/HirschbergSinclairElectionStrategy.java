@@ -19,6 +19,9 @@ public class HirschbergSinclairElectionStrategy implements LeaderElectionStrateg
     private volatile boolean isElectionOn = false;
     private boolean stillHasPotential = true;
 
+    private boolean gotResponseFromLeft = false;
+    private boolean gotResponseFromRight = false;
+
     @Builder
     public HirschbergSinclairElectionStrategy(NodeTopologyHandler nodeTopologyHandler) {
         this.nodeTopologyHandler = nodeTopologyHandler;
@@ -34,22 +37,27 @@ public class HirschbergSinclairElectionStrategy implements LeaderElectionStrateg
     @Override
     public void startElection() throws RemoteException, MalformedURLException, NotBoundException {
         if (isElectionOn) {
-            System.out.println("No need to start!");
             return;
         }
         System.out.println("Start election!");
         isElectionOn = true;
+        stillHasPotential = true;
         callElectionLeft();
         callElectionRight();
-        //sendMyVote(0, 1);
+        sendMyVote(0, 1);
     }
 
     public void sendMyVote(int phase, int distanceSoFar) throws RemoteException, MalformedURLException, NotBoundException {
+        if (!stillHasPotential) {
+            return;
+        }
+
         TopologyMessage messageLeft = TopologyMessageImpl.builder()
                 .originalNode(nodeTopologyHandler.getMyself())
                 .purpose(ELECT).direction(LEFT)
                 .distanceSoFar(distanceSoFar).phase(phase)
                 .build();
+        System.out.println("sending to LEFT with id " + nodeTopologyHandler.getMyself().getId() + " phase and distance " + phase + " " + distanceSoFar);
         nodeTopologyHandler.sendMessage(messageLeft);
 
         TopologyMessage messageRight = TopologyMessageImpl.builder()
@@ -57,7 +65,8 @@ public class HirschbergSinclairElectionStrategy implements LeaderElectionStrateg
                 .purpose(ELECT).direction(RIGHT)
                 .distanceSoFar(distanceSoFar).phase(phase)
                 .build();
-        nodeTopologyHandler.sendMessage(messageRight);
+
+        System.out.println("sending to RIGHT with id " + nodeTopologyHandler.getMyself().getId()+ " phase and distance " + phase + " " + distanceSoFar);        nodeTopologyHandler.sendMessage(messageRight);
 
     }
 
@@ -65,33 +74,77 @@ public class HirschbergSinclairElectionStrategy implements LeaderElectionStrateg
     public void receiveMessage(TopologyMessage message) throws RemoteException, MalformedURLException, NotBoundException {
         switch (message.getPurpose()) {
             case START_ELECTION:
-                System.out.println("got start election message directed to" + message.getDirection());
+                System.out.println("got start election message directed to " + message.getDirection());
 
                 if (!isElectionOn) {
-                    System.out.println("And its good new for us!");
                     isElectionOn = true;
 
                     if (message.getDirection() == LEFT) {
-                        System.out.println("pass on to left");
                         callElectionLeft();
                     } else if (message.getDirection() == RIGHT) {
-                        System.out.println("pass on to right");
                         callElectionRight();
                     }
-
-//                    sendMyVote(0, 1);
+                    stillHasPotential = true;
+                    sendMyVote(0, 1);
                 } else {
-                    System.out.println("But we know that!");
+                    System.out.println("We already have election up and running!");
                 }
                 break;
             case ELECT:
-                System.out.println("got election message" + message);
+                System.out.println("got election message with ID " + message.getOriginId() + "   " + message.getDirection() + " with disrtance " + message.getDistanceSoFar() + "at phase " + message.getPhase());
+
+                if (message.getOriginId() == nodeTopologyHandler.getMyself().getId() && !message.getChangedDirection()) {
+
+                    System.out.println("WE GOT OURSELVES A LEADER");
+
+                } else if (message.getOriginId() == nodeTopologyHandler.getMyself().getId() && message.getChangedDirection()) {
+
+                    if (gotResponseFromLeft || gotResponseFromRight) {
+                        System.out.println("===== great! send again");
+                        gotResponseFromRight = false;
+                        gotResponseFromLeft = false;
+
+                        sendMyVote(message.getPhase() + 1, 1);
+                    } else if (message.getDirection().equals(LEFT)) {
+                        System.out.println("set got message from right");
+                        gotResponseFromRight = true;
+                    } else {
+                        System.out.println("set got message from left");
+                        gotResponseFromLeft = true;
+                    }
+
+
+                } else if (message.getOriginId() < nodeTopologyHandler.getMyself().getId()) {
+                    System.out.println("Not gonna pass that on.");
+                } else if (message.getOriginId() > nodeTopologyHandler.getMyself().getId()) {
+                    stillHasPotential = false;
+                    //gotResponseFromRight = false;
+                    //gotResponseFromLeft = false;
+
+                    System.out.println("Im losing potential");
+                    System.out.println("the message is at phase " + message.getPhase() + " distance " + message.getDistanceSoFar() + " changed? " + message.getChangedDirection())
+                    ;
+                    if (Math.pow(2, message.getPhase()) == message.getDistanceSoFar() && !message.getChangedDirection()) {
+                        System.out.println("CHANGE DIRECTION ");
+
+                        // the message has reached its phase distance
+                        if (message.getDirection() == LEFT) {
+                            message.setDirection(RIGHT);
+                        } else {
+                            message.setDirection(LEFT);
+                        }
+                        message.setChangedDirection(true);
+                        message.setDistanceSoFar(1);
+                        nodeTopologyHandler.sendMessage(message);
+                    } else {
+                        System.out.println("forward the message!");
+                        message.setDistanceSoFar(message.getDistanceSoFar() + 1);
+                        nodeTopologyHandler.sendMessage(message);
+                    }
+                }
+
+                break;
         }
-    }
-
-    @Override
-    public void sendMessage(TopologyMessage message) throws RemoteException, MalformedURLException, NotBoundException {
-
     }
 
     private void callElectionLeft() throws RemoteException, NotBoundException, MalformedURLException {
