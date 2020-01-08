@@ -12,4 +12,6 @@ public interface TopologyMessage extends Remote {
     int getOriginPort() throws RemoteException;
 
     TopologyMessagePurpose getPurpose() throws RemoteException;
+
+    TopologyMessageDirection getDirection() throws RemoteException;
 }

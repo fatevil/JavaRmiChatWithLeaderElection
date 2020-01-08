@@ -83,16 +83,15 @@ public class NodeImpl extends UnicastRemoteObject implements Node {
     }
 
     private void createTopologyHandlerEndpoint() throws RemoteException, MalformedURLException, AlreadyBoundException {
-        log.info("Create Message endpoint at: " + "//" + this.getIpAddress() + ":" + this.getPort() + "/TopologyHandler");
+        log.info("Create TopologyHandler endpoint at: " + "//" + this.getIpAddress() + ":" + this.getPort() + "/TopologyHandler");
 
         final Registry registry = LocateRegistry.createRegistry(this.getPort());
-        registry.bind("TopologyHandler", this.nodeTopologyHandler);
+        registry.bind("NodeTopologyHandler", this.nodeTopologyHandler);
     }
 
     @Override
     public void fixNetwork() throws RemoteException, MalformedURLException, NotBoundException {
         nodeTopologyHandler.getNewLeader();
     }
-
 }
 

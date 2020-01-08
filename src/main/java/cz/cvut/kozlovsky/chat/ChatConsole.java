@@ -12,6 +12,8 @@ import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -60,6 +62,14 @@ public class ChatConsole extends UnicastRemoteObject implements MessageHandler<S
                         receiving = true;
                         System.out.println("Back in business my friend.");
                         break;
+                    case "REGISTRY":
+                        final Registry registry = LocateRegistry.getRegistry(node.getPort());
+                        System.out.println("== REGISTRY ==");;
+                        for (String s : registry.list()) {
+                            System.out.println(s);
+                        }
+                        System.out.println("== ==");
+                        break;
                     default:
                         if (receiving) {
                             sendMessage(line);
@@ -97,8 +107,6 @@ public class ChatConsole extends UnicastRemoteObject implements MessageHandler<S
         final String prefix = "==== " + node.getNickname() + ": ";
         final String message = prefix + text;
 
-        node.fixNetwork();
-
         List<Node> nodes = null;
         //while (nodes == null) {
 
@@ -106,14 +114,13 @@ public class ChatConsole extends UnicastRemoteObject implements MessageHandler<S
         boolean isAvailable = StatusCheck.isAvaliable(establishedNetwork, 50, TimeUnit.MILLISECONDS);
 
         // then make copy of the currently active nodes
-        nodes = establishedNetwork.getActiveNodes();
+
 
         if (!isAvailable) {
             log.severe("==== GOT DISCONNECTED FROM MASTER ==== ");
-            //e.printStackTrace();
-
             node.fixNetwork();
-
+        } else {
+            nodes = establishedNetwork.getActiveNodes();
         }
         //}
 

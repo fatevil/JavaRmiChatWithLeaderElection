@@ -1,5 +1,6 @@
 package cz.cvut.kozlovsky.model;
 
+import cz.cvut.kozlovsky.topology.NodeTopologyHandler;
 import lombok.Data;
 
 import java.rmi.RemoteException;
@@ -8,6 +9,7 @@ import java.rmi.server.UnicastRemoteObject;
 @Data
 public class NodeStub {
 
+    private NodeTopologyHandler topologyHandler;
     private final int id;
     private final String ipAddress;
     private final int port;
