@@ -53,10 +53,6 @@ public class NodeTopologyHandlerImpl extends UnicastRemoteObject implements Node
             return;
         }
 
-        System.out.println(leftNeighbour);
-        System.out.println(myself);
-        System.out.println(rightNeighbour);
-
         try {
             leftNeighbour.setTopologyHandler(getTopologyHandler(leftNeighbour));
         } catch (NotBoundException | RemoteException | MalformedURLException e) {
@@ -76,9 +72,7 @@ public class NodeTopologyHandlerImpl extends UnicastRemoteObject implements Node
             System.exit(1);
         } else if (leftNeighbour == null && !fixInProgress) {
             TopologyMessage message = TopologyMessageImpl.builder()
-                    .originId(myself.getId())
-                    .originIpAddress(myself.getIpAddress())
-                    .originPort(myself.getPort())
+                    .originalNode(myself)
                     .purpose(TOPOLOGY_NOT_OKAY)
                     .direction(RIGHT)
                     .build();
@@ -87,9 +81,7 @@ public class NodeTopologyHandlerImpl extends UnicastRemoteObject implements Node
             sendMessage(message);
         } else if (rightNeighbour == null && !fixInProgress) {
             TopologyMessage message = TopologyMessageImpl.builder()
-                    .originId(myself.getId())
-                    .originIpAddress(myself.getIpAddress())
-                    .originPort(myself.getPort())
+                    .originalNode(myself)
                     .purpose(TOPOLOGY_NOT_OKAY)
                     .direction(LEFT)
                     .build();
@@ -119,6 +111,7 @@ public class NodeTopologyHandlerImpl extends UnicastRemoteObject implements Node
 
                     log.info("Fixed RIGHT neighbour with ID " + message.getOriginId());
                     solveQueuedMessages();
+                    leaderElectionStrategy.startElection();
                 } else if (leftNeighbour == null) {
                     leftNeighbour = new NodeStub(message.getOriginId(), message.getOriginIpAddress(), message.getOriginPort());
                     fixInProgress = false;
@@ -135,6 +128,7 @@ public class NodeTopologyHandlerImpl extends UnicastRemoteObject implements Node
 
             case START_ELECTION:
                 if (fixInProgress) {
+                    System.out.println("= push to stack");
                     messageQueue.push(message);
                 } else {
                     leaderElectionStrategy.receiveMessage(message);
@@ -152,15 +146,21 @@ public class NodeTopologyHandlerImpl extends UnicastRemoteObject implements Node
     @Override
     public void sendMessage(TopologyMessage message) throws RemoteException, MalformedURLException, NotBoundException {
         if (message.getDirection().equals(LEFT)) {
+            if (leftNeighbour.getTopologyHandler() == null) {
+                leftNeighbour.setTopologyHandler(getTopologyHandler(leftNeighbour));
+            }
             leftNeighbour.getTopologyHandler().receiveMessage(message);
 
         } else {
+            if (rightNeighbour.getTopologyHandler() == null) {
+                rightNeighbour.setTopologyHandler(getTopologyHandler(rightNeighbour));
+            }
             rightNeighbour.getTopologyHandler().receiveMessage(message);
         }
     }
 
     public NodeTopologyHandler getTopologyHandler(NodeStub node) throws RemoteException, MalformedURLException, NotBoundException {
-        log.info("Lookup NodeTopologyHandler at: " + "//" + node.getIpAddress() + ":" + node.getPort() + "/TopologyHandler");
+//        log.info("Lookup NodeTopologyHandler at: " + "//" + node.getIpAddress() + ":" + node.getPort() + "/TopologyHandler");
 
         return (NodeTopologyHandler) Naming.lookup("//" + node.getIpAddress() + ":" + node.getPort() + "/NodeTopologyHandler");
     }
@@ -188,5 +188,6 @@ public class NodeTopologyHandlerImpl extends UnicastRemoteObject implements Node
     public void setMyself(Node node) throws RemoteException {
         myself = new NodeStub(node);
     }
+
 
 }
