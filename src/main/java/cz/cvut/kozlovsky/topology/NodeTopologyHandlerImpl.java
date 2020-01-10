@@ -187,10 +187,4 @@ public class NodeTopologyHandlerImpl extends UnicastRemoteObject implements Node
         rightNeighbour = new NodeStub(node);
     }
 
-    @Override
-    public void setMyself(Node node) throws RemoteException {
-        myself = new NodeStub(node);
-    }
-
-
 }

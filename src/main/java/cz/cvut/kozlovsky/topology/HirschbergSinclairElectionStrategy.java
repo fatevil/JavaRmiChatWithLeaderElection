@@ -1,7 +1,6 @@
 package cz.cvut.kozlovsky.topology;
 
 import lombok.Builder;
-import lombok.Data;
 
 import java.net.MalformedURLException;
 import java.rmi.AlreadyBoundException;
@@ -12,15 +11,13 @@ import static cz.cvut.kozlovsky.topology.TopologyMessageDirection.LEFT;
 import static cz.cvut.kozlovsky.topology.TopologyMessageDirection.RIGHT;
 import static cz.cvut.kozlovsky.topology.TopologyMessagePurpose.*;
 
-@Data
 public class HirschbergSinclairElectionStrategy implements LeaderElectionStrategy {
 
     private final NodeTopologyHandler nodeTopologyHandler;
     private volatile boolean isElectionOn = false;
     private boolean stillHasPotential = true;
 
-    private boolean gotResponseFromLeft = false;
-    private boolean gotResponseFromRight = false;
+    private boolean returnedVotes = false;
 
     @Builder
     public HirschbergSinclairElectionStrategy(NodeTopologyHandler nodeTopologyHandler) {
@@ -37,10 +34,8 @@ public class HirschbergSinclairElectionStrategy implements LeaderElectionStrateg
     @Override
     public void startElection() throws RemoteException, MalformedURLException, NotBoundException, AlreadyBoundException {
         if (isElectionOn || nodeTopologyHandler.getNode().isConnectedToNetwork()) {
-            System.out.println("not goind for it");
             return;
         }
-        System.out.println("Start election!");
         isElectionOn = true;
         stillHasPotential = true;
         callElectionLeft();
@@ -58,7 +53,6 @@ public class HirschbergSinclairElectionStrategy implements LeaderElectionStrateg
                 .purpose(ELECT).direction(LEFT)
                 .distanceSoFar(distanceSoFar).phase(phase)
                 .build();
-        System.out.println("sending to LEFT with id " + nodeTopologyHandler.getMyself().getId() + " phase and distance " + phase + " " + distanceSoFar);
         nodeTopologyHandler.sendMessage(messageLeft);
 
         TopologyMessage messageRight = TopologyMessageImpl.builder()
@@ -66,18 +60,13 @@ public class HirschbergSinclairElectionStrategy implements LeaderElectionStrateg
                 .purpose(ELECT).direction(RIGHT)
                 .distanceSoFar(distanceSoFar).phase(phase)
                 .build();
-
-        System.out.println("sending to RIGHT with id " + nodeTopologyHandler.getMyself().getId() + " phase and distance " + phase + " " + distanceSoFar);
         nodeTopologyHandler.sendMessage(messageRight);
-
     }
 
     @Override
     public void receiveMessage(TopologyMessage message) throws RemoteException, MalformedURLException, NotBoundException, AlreadyBoundException {
         switch (message.getPurpose()) {
             case START_ELECTION:
-                System.out.println("got start election message directed to " + message.getDirection());
-
                 if (!isElectionOn) {
                     isElectionOn = true;
 
@@ -89,55 +78,38 @@ public class HirschbergSinclairElectionStrategy implements LeaderElectionStrateg
                     stillHasPotential = true;
                     sendMyVote(0, 1);
                 } else {
-                    System.out.println("We already have election up and running!");
+                    // we already have elecion up and running
                 }
                 break;
             case ELECT:
-                System.out.println("got election message with ID " + message.getOriginId() + "   " + message.getDirection() + " with disrtance " + message.getDistanceSoFar() + "at phase " + message.getPhase());
                 if (message.getOriginId() == nodeTopologyHandler.getMyself().getId() && !message.getChangedDirection()) {
+                    // election went over the whole circle without turning back
 
-                    if (gotResponseFromLeft || gotResponseFromRight) {
+                    resetVars(); // set election no more
 
-                        System.out.println("WE GOT OURSELVES A LEADER");
+                    // create new network, don't lose current neighbours
+                    nodeTopologyHandler.getNode().createEstablishedNetwork(false);
+                    nodeTopologyHandler.getNode().reassignChatConsole();
 
-                        resetVars();
-                        nodeTopologyHandler.getNode().createEstablishedNetwork(false);
-                        nodeTopologyHandler.getNode().reassignChatConsole();
-                        sendElected();
-
-                    } else if (message.getDirection().equals(LEFT)) {
-                        gotResponseFromRight = true;
-                    } else {
-                        gotResponseFromLeft = true;
-                    }
-
+                    // announce leader to other nodes
+                    sendElected();
                 } else if (message.getOriginId() == nodeTopologyHandler.getMyself().getId() && message.getChangedDirection()) {
+                    // is back from the phase
 
-                    if (gotResponseFromLeft || gotResponseFromRight) {
-                        System.out.println("===== great! send again");
-                        gotResponseFromRight = false;
-                        gotResponseFromLeft = false;
+                    if (returnedVotes) {
+                        // come back from the second side as well
+                        returnedVotes = false;
                         sendMyVote(message.getPhase() + 1, 1);
-
-                    } else if (message.getDirection().equals(LEFT)) {
-                        System.out.println("set got message from right");
-                        gotResponseFromRight = true;
                     } else {
-                        System.out.println("set got message from left");
-                        gotResponseFromLeft = true;
+                        returnedVotes = true;
                     }
-
                 } else if (message.getOriginId() < nodeTopologyHandler.getMyself().getId()) {
-                    System.out.println("Not gonna pass that on.");
+                    // do not pass the message on
                 } else if (message.getOriginId() > nodeTopologyHandler.getMyself().getId()) {
+                    // loses potential for a leader (found bigger ID)
                     stillHasPotential = false;
 
-                    System.out.println("Im losing potential");
-                    System.out.println("the message is at phase " + message.getPhase() + " distance " + message.getDistanceSoFar() + " changed? " + message.getChangedDirection())
-                    ;
                     if (Math.pow(2, message.getPhase()) == message.getDistanceSoFar() && !message.getChangedDirection()) {
-                        System.out.println("CHANGE DIRECTION ");
-
                         // the message has reached its phase distance
                         if (message.getDirection() == LEFT) {
                             message.setDirection(RIGHT);
@@ -146,9 +118,11 @@ public class HirschbergSinclairElectionStrategy implements LeaderElectionStrateg
                         }
                         message.setChangedDirection(true);
                         message.setDistanceSoFar(1);
+
+                        // send back
                         nodeTopologyHandler.sendMessage(message);
                     } else {
-                        System.out.println("forward the message!");
+                        // pass on
                         message.setDistanceSoFar(message.getDistanceSoFar() + 1);
                         nodeTopologyHandler.sendMessage(message);
                     }
@@ -158,8 +132,7 @@ public class HirschbergSinclairElectionStrategy implements LeaderElectionStrateg
                 if (message.getOriginId() == nodeTopologyHandler.getMyself().getId()) {
                     break;
                 }
-
-                System.out.println("GOT NEW LEADER, HAIL TO THE KING!");
+                // joined newly established network and set up the chat again
                 nodeTopologyHandler.getNode().joinEstablishedNetwork(message.getOriginIpAddress(), message.getOriginPort(), false);
                 nodeTopologyHandler.getNode().reassignChatConsole();
                 nodeTopologyHandler.sendMessage(message);
@@ -170,7 +143,6 @@ public class HirschbergSinclairElectionStrategy implements LeaderElectionStrateg
     }
 
     private void sendElected() throws RemoteException, NotBoundException, MalformedURLException, AlreadyBoundException {
-        System.out.println("sending elected");
         TopologyMessage messageLeft = TopologyMessageImpl.builder()
                 .originalNode(nodeTopologyHandler.getMyself())
                 .purpose(ELECTED).direction(LEFT).build();
@@ -196,7 +168,5 @@ public class HirschbergSinclairElectionStrategy implements LeaderElectionStrateg
     private void resetVars() {
         isElectionOn = false;
         stillHasPotential = true;
-        gotResponseFromLeft = false;
-        gotResponseFromRight = false;
     }
 }
