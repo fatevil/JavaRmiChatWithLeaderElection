@@ -72,8 +72,9 @@ public class NodeTopologyHandlerImpl extends UnicastRemoteObject implements Node
         }
 
         if (rightNeighbour == null && leftNeighbour == null) {
-            log.info("Lost both my neighbours. Gotta terminate.");
-            System.exit(1);
+            log.info("Lost both my neighbours.");
+            node.createEstablishedNetwork(true);
+
         } else if (leftNeighbour == null && !fixInProgress) {
             TopologyMessage message = TopologyMessageImpl.builder()
                     .originalNode(myself)
