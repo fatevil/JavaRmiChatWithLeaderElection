@@ -9,7 +9,7 @@ import java.rmi.RemoteException;
 
 public class Master {
 
-    public static void main(String[] args) throws AlreadyBoundException, RemoteException, MalformedURLException {
+    public static void main(String[] args) throws AlreadyBoundException, RemoteException, MalformedURLException, NotBoundException {
 
         final int id = 100;
         final String ipAddress = "127.0.0.1";

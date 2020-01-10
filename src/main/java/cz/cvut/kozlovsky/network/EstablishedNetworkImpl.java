@@ -7,8 +7,6 @@ import lombok.Builder;
 import lombok.extern.java.Log;
 
 import java.rmi.RemoteException;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,20 +29,22 @@ class EstablishedNetworkImpl extends UnicastRemoteObject implements EstablishedN
     private final Map<Integer, Node> nodes = new ConcurrentHashMap<>();
 
     @Builder
-    public EstablishedNetworkImpl(NodeImpl leader) throws RemoteException {
+    public EstablishedNetworkImpl(NodeImpl leader, boolean assignNeigbours) throws RemoteException {
         super();
         log.info(String.format("Creating network with leader ID %s", leader.getId()));
         this.leader = leader;
-        acceptMember(leader);
+        acceptMember(leader, assignNeigbours);
     }
 
     @Override
-    public void acceptMember(Node newComer) throws RemoteException {
+    public void acceptMember(Node newComer, boolean assignNeigbours) throws RemoteException {
         log.info(String.format("Accepting node with ID %s", newComer.getId()));
 
         // no need for synchronized block for put, thanks to concurrent data structure
         nodes.put(newComer.getId(), newComer);
-        fixNodeNeighbours();
+        if (assignNeigbours) {
+            fixNodeNeighbours();
+        }
     }
 
     @Override
@@ -61,16 +61,16 @@ class EstablishedNetworkImpl extends UnicastRemoteObject implements EstablishedN
 
             try {
                 if (id == leader.getId()) return;
-
-                boolean isAvailable = StatusCheck.isAvaliable(node, 50, TimeUnit.MILLISECONDS);
-                if (!isAvailable) {
-                    nodes.remove(id);
-                    needNeighboursFix[0] = true;
-                    log.info("Node with ID " + id + " not reachable! REMOVED FROM CHAT.");
-                }
             } catch (RemoteException e) {
                 // should not happen (leader is always reachable)
                 e.printStackTrace();
+            }
+
+            boolean isAvailable = StatusCheck.isAvaliable(node, 50, TimeUnit.MILLISECONDS);
+            if (!isAvailable) {
+                nodes.remove(id);
+                needNeighboursFix[0] = true;
+                log.info("Node with ID " + id + " not reachable! REMOVED FROM CHAT.");
             }
         });
 

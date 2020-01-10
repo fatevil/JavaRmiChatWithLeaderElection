@@ -8,7 +8,7 @@ import java.util.List;
 
 public interface EstablishedNetwork extends Remote, Reachable {
 
-    void acceptMember(Node newComer) throws RemoteException;
+    void acceptMember(Node newComer, boolean assignNeigbours) throws RemoteException;
 
     List<Node> getActiveNodes() throws RemoteException;
 

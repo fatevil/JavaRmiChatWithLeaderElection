@@ -1,6 +1,5 @@
 package cz.cvut.kozlovsky.topology;
 
-import cz.cvut.kozlovsky.model.NodeStub;
 import lombok.Builder;
 import lombok.Data;
 
@@ -37,7 +36,8 @@ public class HirschbergSinclairElectionStrategy implements LeaderElectionStrateg
      */
     @Override
     public void startElection() throws RemoteException, MalformedURLException, NotBoundException, AlreadyBoundException {
-        if (isElectionOn) {
+        if (isElectionOn || nodeTopologyHandler.getNode().isConnectedToNetwork()) {
+            System.out.println("not goind for it");
             return;
         }
         System.out.println("Start election!");
@@ -94,65 +94,63 @@ public class HirschbergSinclairElectionStrategy implements LeaderElectionStrateg
                 break;
             case ELECT:
                 System.out.println("got election message with ID " + message.getOriginId() + "   " + message.getDirection() + " with disrtance " + message.getDistanceSoFar() + "at phase " + message.getPhase());
-                if (isElectionOn) {
-                    if (message.getOriginId() == nodeTopologyHandler.getMyself().getId() && !message.getChangedDirection()) {
+                if (message.getOriginId() == nodeTopologyHandler.getMyself().getId() && !message.getChangedDirection()) {
 
-                        if (gotResponseFromLeft || gotResponseFromRight) {
+                    if (gotResponseFromLeft || gotResponseFromRight) {
 
-                            System.out.println("WE GOT OURSELVES A LEADER");
+                        System.out.println("WE GOT OURSELVES A LEADER");
 
-                            resetVars();
-                            nodeTopologyHandler.getNode().createEstablishedNetwork();
-                            nodeTopologyHandler.getNode().reassignChatConsole();
-                            sendElected();
+                        resetVars();
+                        nodeTopologyHandler.getNode().createEstablishedNetwork(false);
+                        nodeTopologyHandler.getNode().reassignChatConsole();
+                        sendElected();
 
-                        } else if (message.getDirection().equals(LEFT)) {
-                            gotResponseFromRight = true;
+                    } else if (message.getDirection().equals(LEFT)) {
+                        gotResponseFromRight = true;
+                    } else {
+                        gotResponseFromLeft = true;
+                    }
+
+                } else if (message.getOriginId() == nodeTopologyHandler.getMyself().getId() && message.getChangedDirection()) {
+
+                    if (gotResponseFromLeft || gotResponseFromRight) {
+                        System.out.println("===== great! send again");
+                        gotResponseFromRight = false;
+                        gotResponseFromLeft = false;
+                        sendMyVote(message.getPhase() + 1, 1);
+
+                    } else if (message.getDirection().equals(LEFT)) {
+                        System.out.println("set got message from right");
+                        gotResponseFromRight = true;
+                    } else {
+                        System.out.println("set got message from left");
+                        gotResponseFromLeft = true;
+                    }
+
+                } else if (message.getOriginId() < nodeTopologyHandler.getMyself().getId()) {
+                    System.out.println("Not gonna pass that on.");
+                } else if (message.getOriginId() > nodeTopologyHandler.getMyself().getId()) {
+                    stillHasPotential = false;
+
+                    System.out.println("Im losing potential");
+                    System.out.println("the message is at phase " + message.getPhase() + " distance " + message.getDistanceSoFar() + " changed? " + message.getChangedDirection())
+                    ;
+                    if (Math.pow(2, message.getPhase()) == message.getDistanceSoFar() && !message.getChangedDirection()) {
+                        System.out.println("CHANGE DIRECTION ");
+
+                        // the message has reached its phase distance
+                        if (message.getDirection() == LEFT) {
+                            message.setDirection(RIGHT);
                         } else {
-                            gotResponseFromLeft = true;
+                            message.setDirection(LEFT);
                         }
-
-                    } else if (message.getOriginId() == nodeTopologyHandler.getMyself().getId() && message.getChangedDirection()) {
-
-                        if (gotResponseFromLeft || gotResponseFromRight) {
-                            System.out.println("===== great! send again");
-                            gotResponseFromRight = false;
-                            gotResponseFromLeft = false;
-                            sendMyVote(message.getPhase() + 1, 1);
-
-                        } else if (message.getDirection().equals(LEFT)) {
-                            System.out.println("set got message from right");
-                            gotResponseFromRight = true;
-                        } else {
-                            System.out.println("set got message from left");
-                            gotResponseFromLeft = true;
-                        }
-
-                    } else if (message.getOriginId() < nodeTopologyHandler.getMyself().getId()) {
-                        System.out.println("Not gonna pass that on.");
-                    } else if (message.getOriginId() > nodeTopologyHandler.getMyself().getId()) {
-                        stillHasPotential = false;
-
-                        System.out.println("Im losing potential");
-                        System.out.println("the message is at phase " + message.getPhase() + " distance " + message.getDistanceSoFar() + " changed? " + message.getChangedDirection())
-                        ;
-                        if (Math.pow(2, message.getPhase()) == message.getDistanceSoFar() && !message.getChangedDirection()) {
-                            System.out.println("CHANGE DIRECTION ");
-
-                            // the message has reached its phase distance
-                            if (message.getDirection() == LEFT) {
-                                message.setDirection(RIGHT);
-                            } else {
-                                message.setDirection(LEFT);
-                            }
-                            message.setChangedDirection(true);
-                            message.setDistanceSoFar(1);
-                            nodeTopologyHandler.sendMessage(message);
-                        } else {
-                            System.out.println("forward the message!");
-                            message.setDistanceSoFar(message.getDistanceSoFar() + 1);
-                            nodeTopologyHandler.sendMessage(message);
-                        }
+                        message.setChangedDirection(true);
+                        message.setDistanceSoFar(1);
+                        nodeTopologyHandler.sendMessage(message);
+                    } else {
+                        System.out.println("forward the message!");
+                        message.setDistanceSoFar(message.getDistanceSoFar() + 1);
+                        nodeTopologyHandler.sendMessage(message);
                     }
                 }
                 break;
@@ -162,17 +160,17 @@ public class HirschbergSinclairElectionStrategy implements LeaderElectionStrateg
                 }
 
                 System.out.println("GOT NEW LEADER, HAIL TO THE KING!");
-                nodeTopologyHandler.getNode().joinEstablishedNetwork(message.getOriginIpAddress(), message.getOriginPort());
+                nodeTopologyHandler.getNode().joinEstablishedNetwork(message.getOriginIpAddress(), message.getOriginPort(), false);
                 nodeTopologyHandler.getNode().reassignChatConsole();
-                resetVars();
                 nodeTopologyHandler.sendMessage(message);
-
+                resetVars();
                 break;
         }
 
     }
 
     private void sendElected() throws RemoteException, NotBoundException, MalformedURLException, AlreadyBoundException {
+        System.out.println("sending elected");
         TopologyMessage messageLeft = TopologyMessageImpl.builder()
                 .originalNode(nodeTopologyHandler.getMyself())
                 .purpose(ELECTED).direction(LEFT).build();

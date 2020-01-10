@@ -22,14 +22,16 @@ public interface Node extends Remote, Reachable {
 
     NodeTopologyHandler getNodeTopologyHandler() throws RemoteException;
 
-    MessageHandler getChatConsole() throws RemoteException;
-
     void fixNetwork() throws RemoteException, MalformedURLException, NotBoundException, AlreadyBoundException;
 
-    void createEstablishedNetwork() throws RemoteException, MalformedURLException, AlreadyBoundException;
+    boolean isConnectedToNetwork() throws RemoteException;
 
-    void joinEstablishedNetwork(String remoteAddress, int remotePort) throws RemoteException, NotBoundException, MalformedURLException;
+    void createEstablishedNetwork(boolean assignNeigbours) throws RemoteException, MalformedURLException, AlreadyBoundException;
+
+    void joinEstablishedNetwork(String remoteAddress, int remotePort, boolean assignNeigbours) throws RemoteException, NotBoundException, MalformedURLException;
 
     void reassignChatConsole() throws RemoteException;
+
+    MessageHandler getChatConsole() throws RemoteException;
 
 }

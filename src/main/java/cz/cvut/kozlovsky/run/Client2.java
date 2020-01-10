@@ -14,7 +14,7 @@ public class Client2 {
         final int id = 103;
         final String ipAddress = "127.0.0.1";
         final int port = 2113;
-        final String name = "Pepa";
+        final String name = "Tomos";
         final String remoteAddress = "127.0.0.1";
         final int remotePort = 2110;
 

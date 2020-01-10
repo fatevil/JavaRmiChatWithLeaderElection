@@ -40,13 +40,13 @@ public class ChatConsole extends UnicastRemoteObject implements MessageHandler<S
      *
      * @throws RemoteException
      */
-    public void startChatting() throws RemoteException {
+    public void startChatting() throws RemoteException, AlreadyBoundException, NotBoundException, MalformedURLException {
         log.info("Just joining the chat with name: " + node.getNickname());
 
         receiving = true;
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 
-        //sendMessage("Hi to everyone, glad to be joining the chatter! All ready gossip!");
+        sendMessage("Hi to everyone, glad to be joining the chatter! All ready for gossip!");
         while (true) {
             String line;
             try {
@@ -100,7 +100,7 @@ public class ChatConsole extends UnicastRemoteObject implements MessageHandler<S
     /**
      * Makes copy of currently active nodes (their proxy objects) and distributes given text with chat prefix.
      * <p>
-     * If the connection to leader is broken, participate in fixing it until it's fixed.
+     * If the connection to leader is broken, participate in fixing it.
      *
      * @param text
      * @throws RemoteException
@@ -110,29 +110,19 @@ public class ChatConsole extends UnicastRemoteObject implements MessageHandler<S
         final String message = prefix + text;
 
         List<Node> nodes = null;
-        //while (nodes == null) {
 
-            // first check if master is still available
-            boolean isAvailable = StatusCheck.isAvaliable(establishedNetwork, 50, TimeUnit.MILLISECONDS);
+        // first check if master is still available
+        boolean isAvailable = StatusCheck.isAvaliable(establishedNetwork, 50, TimeUnit.MILLISECONDS);
+        if (!isAvailable) {
+            log.severe("==== GOT DISCONNECTED FROM MASTER ==== ");
+            node.fixNetwork();
+        }
 
-            // then make copy of the currently active nodes
+        // then make copy of the currently active nodes
+        nodes = establishedNetwork.getActiveNodes();
 
-
-            if (!isAvailable) {
-                log.severe("==== GOT DISCONNECTED FROM MASTER ==== ");
-                node.fixNetwork();
-                try {
-                    Thread.sleep(5000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            } else {
-                nodes = establishedNetwork.getActiveNodes();
-            }
-        //}
-
-        //for (Node n : nodes) {
-//            n.getChatConsole().receiveMessage(message);
-//        }
+        for (Node n : nodes) {
+            n.getChatConsole().receiveMessage(message);
+        }
     }
 }

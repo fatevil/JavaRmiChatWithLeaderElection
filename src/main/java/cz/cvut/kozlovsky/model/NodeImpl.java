@@ -3,6 +3,7 @@ package cz.cvut.kozlovsky.model;
 import cz.cvut.kozlovsky.chat.ChatConsole;
 import cz.cvut.kozlovsky.network.EstablishedNetwork;
 import cz.cvut.kozlovsky.network.EstablishedNetworkImpl;
+import cz.cvut.kozlovsky.network.StatusCheck;
 import cz.cvut.kozlovsky.topology.NodeTopologyHandler;
 import cz.cvut.kozlovsky.topology.NodeTopologyHandlerImpl;
 import lombok.Data;
@@ -18,6 +19,7 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.concurrent.TimeUnit;
 
 @Log
 @Data
@@ -38,7 +40,7 @@ public class NodeImpl extends UnicastRemoteObject implements Node {
     /**
      * Constructor for leaders.s
      */
-    public NodeImpl(int id, String ipAddress, int port, String nickname) throws RemoteException, MalformedURLException, AlreadyBoundException {
+    public NodeImpl(int id, String ipAddress, int port, String nickname) throws RemoteException, MalformedURLException, AlreadyBoundException, NotBoundException {
         this.id = id;
         this.ipAddress = ipAddress;
         this.port = port;
@@ -46,7 +48,7 @@ public class NodeImpl extends UnicastRemoteObject implements Node {
         this.nodeTopologyHandler = new NodeTopologyHandlerImpl(this);
         createTopologyHandlerEndpoint();
 
-        createEstablishedNetwork();
+        createEstablishedNetwork(true);
         this.chatConsole = new ChatConsole(establishedNetwork, this);
         this.chatConsole.startChatting();
     }
@@ -62,24 +64,24 @@ public class NodeImpl extends UnicastRemoteObject implements Node {
         this.nodeTopologyHandler = new NodeTopologyHandlerImpl(this);
         createTopologyHandlerEndpoint();
 
-        joinEstablishedNetwork(remoteAddress, remotePort);
+        joinEstablishedNetwork(remoteAddress, remotePort, true);
         this.chatConsole = new ChatConsole(establishedNetwork, this);
         this.chatConsole.startChatting();
     }
 
-    public void createEstablishedNetwork() throws RemoteException, MalformedURLException, AlreadyBoundException {
+    public void createEstablishedNetwork(boolean assignNeigbours) throws RemoteException, MalformedURLException, AlreadyBoundException {
         log.info("Register NetworkTracker at: " + "//" + this.getIpAddress() + ":" + this.getPort() + "/NetworkTracker");
-        this.establishedNetwork = new EstablishedNetworkImpl(this);
+        this.establishedNetwork = new EstablishedNetworkImpl(this, assignNeigbours);
 
         final Registry registry = LocateRegistry.getRegistry(this.getPort());
         registry.bind("NetworkTracker", this.establishedNetwork);
     }
 
-    public void joinEstablishedNetwork(String remoteAddress, int remotePort) throws RemoteException, NotBoundException, MalformedURLException {
+    public void joinEstablishedNetwork(String remoteAddress, int remotePort, boolean assignNeighbours) throws RemoteException, NotBoundException, MalformedURLException {
         log.info("Lookup NetworkTracker at: " + "//" + remoteAddress + ":" + remotePort + "/NetworkTracker");
 
         establishedNetwork = (EstablishedNetwork) Naming.lookup("//" + remoteAddress + ":" + remotePort + "/NetworkTracker");
-        establishedNetwork.acceptMember(this);
+        establishedNetwork.acceptMember(this, assignNeighbours);
     }
 
     private void createTopologyHandlerEndpoint() throws RemoteException, MalformedURLException, AlreadyBoundException {
@@ -97,5 +99,11 @@ public class NodeImpl extends UnicastRemoteObject implements Node {
     public void reassignChatConsole() {
         chatConsole.setEstablishedNetwork(establishedNetwork);
     }
+
+    @Override
+    public boolean isConnectedToNetwork() throws RemoteException {
+        return StatusCheck.isAvaliable(establishedNetwork, 50, TimeUnit.MILLISECONDS);
+    }
+
 }
 

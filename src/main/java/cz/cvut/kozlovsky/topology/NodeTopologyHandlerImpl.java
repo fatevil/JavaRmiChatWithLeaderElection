@@ -1,7 +1,6 @@
 package cz.cvut.kozlovsky.topology;
 
 import cz.cvut.kozlovsky.model.Node;
-import cz.cvut.kozlovsky.model.NodeImpl;
 import cz.cvut.kozlovsky.model.NodeStub;
 import lombok.Builder;
 import lombok.Data;
@@ -13,7 +12,8 @@ import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.Stack;
+import java.util.LinkedList;
+import java.util.Queue;
 
 import static cz.cvut.kozlovsky.topology.TopologyMessageDirection.LEFT;
 import static cz.cvut.kozlovsky.topology.TopologyMessageDirection.RIGHT;
@@ -33,7 +33,7 @@ public class NodeTopologyHandlerImpl extends UnicastRemoteObject implements Node
     private LeaderElectionStrategy leaderElectionStrategy;
 
     private boolean fixInProgress = false;
-    private Stack<TopologyMessage> messageQueue = new Stack<>();
+    private Queue<TopologyMessage> messageQueue = new LinkedList<>();
 
     @Builder
     public NodeTopologyHandlerImpl(Node node) throws RemoteException {
@@ -46,14 +46,13 @@ public class NodeTopologyHandlerImpl extends UnicastRemoteObject implements Node
      * Participates in fixing the ring topology, if broken. Proposes leader election.
      */
     public void requestNetworkFixed() throws RemoteException, NotBoundException, MalformedURLException, AlreadyBoundException {
-        fixRingTopology();
-        leaderElectionStrategy.startElection();
+        fixRingTopologyIfBroken();
     }
 
     /**
      * Fix the ring network topology.
      */
-    private void fixRingTopology() throws RemoteException, MalformedURLException, NotBoundException, AlreadyBoundException {
+    private void fixRingTopologyIfBroken() throws RemoteException, MalformedURLException, NotBoundException, AlreadyBoundException {
         if (fixInProgress) {
             return;
         }
@@ -98,7 +97,11 @@ public class NodeTopologyHandlerImpl extends UnicastRemoteObject implements Node
 
     @Override
     public void receiveMessage(TopologyMessage message) throws RemoteException, MalformedURLException, NotBoundException, AlreadyBoundException {
-        fixRingTopology();
+        if (node.isConnectedToNetwork()) {
+            System.out.println("dont need messages, got connection: " + message.getOriginId() + " " + message.getPurpose() + " ");
+            return;
+        }
+        fixRingTopologyIfBroken();
 
         switch (message.getPurpose()) {
             case TOPOLOGY_NOT_OKAY:
@@ -107,15 +110,15 @@ public class NodeTopologyHandlerImpl extends UnicastRemoteObject implements Node
                     fixInProgress = false;
 
                     log.info("Fixed RIGHT neighbour with ID " + message.getOriginId());
-                    solveQueuedMessages();
                     leaderElectionStrategy.startElection();
+                    solveQueuedMessages();
                 } else if (leftNeighbour == null) {
                     leftNeighbour = new NodeStub(message.getOriginId(), message.getOriginIpAddress(), message.getOriginPort());
                     fixInProgress = false;
 
                     log.info("Fixed LEFT neighbour with ID " + message.getOriginId());
-                    solveQueuedMessages();
                     leaderElectionStrategy.startElection();
+                    solveQueuedMessages();
                 } else {
                     log.info("Passing further message neighbour inquiry from ID  " + message.getOriginId());
                     sendMessage(message);
@@ -128,18 +131,18 @@ public class NodeTopologyHandlerImpl extends UnicastRemoteObject implements Node
             case ELECT:
                 if (fixInProgress) {
                     System.out.println("= push to stack");
-                    messageQueue.push(message);
+                    messageQueue.add(message);
                 } else {
                     leaderElectionStrategy.receiveMessage(message);
                 }
                 break;
-
         }
     }
 
     private void solveQueuedMessages() throws RemoteException, NotBoundException, MalformedURLException, AlreadyBoundException {
         while (!messageQueue.isEmpty()) {
-            receiveMessage(messageQueue.pop());
+            System.out.println("pop from stack");
+            receiveMessage(messageQueue.remove());
         }
     }
 
