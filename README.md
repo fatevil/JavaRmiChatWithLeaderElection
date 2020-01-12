@@ -1,4 +1,39 @@
 
+
+Console application for chatting. Java RMI used for implementation. Hirschberg-Sinclair algorithm for electing new leader.
+
+Typical usage: 
+- Initialize Master node that creates the networ
+- Initialize Client node that join the network
+- Start the discussion
+
+Sending Chat messages:
+- Write message to the console (ChatConsole object)
+    - ChatConsole verifies leader availability (if unavailable, request fix)
+    - ChatConsole requests copy of list of active nodes (leader is the owner of the EstablishedNetwork object)
+    - ChatConsole sends the message with a prefix ("Name: ")
+    
+- Hearbeat
+    - Object NodeImpl implements leader availability check (in a seperate thread)
+    - if the network is unavailable, requests fix
+    
+- Network fix
+    - the two nodes that lost their neighbour send neighbour inquiry message
+    - non-broken nodes nodes pass the message
+    - broken nodes connect to each other
+
+- Leader Election
+    - Hirschberg-Sinclair algorithm is implemented for electing new leader 
+    - every node figuring out network unavailability (by heartbeat or ChatConsole) sends message about starting election and sends message with their own vote for themselves
+    - message for leader election contains:
+        - message direction (ring toplogy - right, left)
+        - node identification (ip address, port, unique ID)
+        - election phase
+        - traveled distance
+    - upon receiving message that the leader has been elected, all the nodes join the newly created network
+
+============
+
 Konzolová aplikace pro chatování. Implementace pomocí Java RMI. Oprava topologického modelu při ztrátě vůdce algoritmem Hirschberg-Sinclair. 
 
 Typické použití:
@@ -29,7 +64,7 @@ Typické použití:
     - každý node při zjištění, že se síť rozpadla rozešle zprávu o začátku volby a dále pošle svůj vlastní hlas
     - zpráva s volbou vůdce obsahuje
         - směr zprávy
-        - identifikýtory původce zprávy
+        - identifikátory původce zprávy (ip adresa, port, unikátní ID)
         - důvod zprávy: začátek voleb, volební prezentace vlastního nodu, oznámení o zvoleném nodu
         - fáze, ve které je hlasování
         - vzdálenost, kterou zpráva urazila
