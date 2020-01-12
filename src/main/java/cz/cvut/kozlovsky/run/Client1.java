@@ -19,7 +19,6 @@ public class Client1 {
         final int remotePort = 2110;
 
         NodeImpl nodeImpl = new NodeImpl(id, ipAddress, port, name, remoteAddress, remotePort);
-        //nodeImpl.startChatting();
 
     }
 

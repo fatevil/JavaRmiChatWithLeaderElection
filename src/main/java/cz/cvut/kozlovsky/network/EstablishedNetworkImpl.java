@@ -15,11 +15,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Keeps track of registered network nodes. Distributes chat messages between clients.
+ * Keeps tracks of nodes in established network connection.
  * <p>
- * Checks availability everytime before invoking remote object method.
- * If it finds non-available nodes, stops keeping track of them (removes them from the concurrent map).
- * After each check, if any node was removed, set new topology neighbours to all nodes.
+ * Provides an eay way to manage nodes for example for spreading messages. Upon asking for copy of all nodes, renews all nodes.
  */
 @Log
 public
@@ -50,6 +48,7 @@ class EstablishedNetworkImpl extends UnicastRemoteObject implements EstablishedN
     @Override
     public List<Node> getActiveNodes() throws RemoteException {
         checkEveryoneAvailable();
+        // no need for synchronized
         return new ArrayList<>(nodes.values());
     }
 

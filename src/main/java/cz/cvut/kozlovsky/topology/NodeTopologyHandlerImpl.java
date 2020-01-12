@@ -48,7 +48,7 @@ public class NodeTopologyHandlerImpl extends UnicastRemoteObject implements Node
     }
 
     /**
-     * Fix the ring network topology.
+     * Send message about missing a neighbour.
      */
     private void fixRingTopologyIfBroken() throws RemoteException, MalformedURLException, NotBoundException, AlreadyBoundException {
         if (fixInProgress) {
@@ -97,7 +97,6 @@ public class NodeTopologyHandlerImpl extends UnicastRemoteObject implements Node
     @Override
     public void receiveMessage(TopologyMessage message) throws RemoteException, MalformedURLException, NotBoundException, AlreadyBoundException {
         if (node.isConnectedToNetwork()) {
-            System.out.println("dont need messages, got connection: " + message.getOriginId() + " " + message.getPurpose() + " ");
             return;
         }
         fixRingTopologyIfBroken();
@@ -119,7 +118,7 @@ public class NodeTopologyHandlerImpl extends UnicastRemoteObject implements Node
                     leaderElectionStrategy.startElection();
                     solveQueuedMessages();
                 } else {
-                    log.info("Passing further message neighbour inquiry from ID  " + message.getOriginId());
+                    log.info("Passing further message. Neighbour inquiry from ID  " + message.getOriginId());
                     sendMessage(message);
                     leaderElectionStrategy.startElection();
                 }
@@ -129,7 +128,6 @@ public class NodeTopologyHandlerImpl extends UnicastRemoteObject implements Node
             case ELECTED:
             case ELECT:
                 if (fixInProgress) {
-                    System.out.println("= push to stack");
                     messageQueue.add(message);
                 } else {
                     leaderElectionStrategy.receiveMessage(message);
@@ -140,7 +138,6 @@ public class NodeTopologyHandlerImpl extends UnicastRemoteObject implements Node
 
     private void solveQueuedMessages() throws RemoteException, NotBoundException, MalformedURLException, AlreadyBoundException {
         while (!messageQueue.isEmpty()) {
-            System.out.println("pop from stack");
             receiveMessage(messageQueue.remove());
         }
     }
