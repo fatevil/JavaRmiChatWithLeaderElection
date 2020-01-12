@@ -12,6 +12,7 @@ Sending Chat messages:
     - ChatConsole verifies leader availability (if unavailable, request fix)
     - ChatConsole requests copy of list of active nodes (leader is the owner of the EstablishedNetwork object)
     - ChatConsole sends the message with a prefix ("Name: ")
+    - Keywords for interacting with the console: EXIT, PAUSE, CONTINUE. 
     
 - Hearbeat
     - Object NodeImpl implements leader availability check (in a seperate thread)
@@ -30,7 +31,7 @@ Sending Chat messages:
         - node identification (ip address, port, unique ID)
         - election phase
         - traveled distance
-    - upon receiving message that the leader has been elected, all the nodes join the newly created network
+    - upon receiving message that the leader has been elected, all the nodres join the newly created network
 
 ============
 
@@ -47,6 +48,7 @@ Typické použití:
     - ChatConsole ověří dostupnost leadera a pokud dostupný není, požádá o opravu
     - ChatConsole dále požádá o kopii listu aktivních účastníků sítě - objekt EstablishedNetwork vlastněný leadrem
     - ChatConsole každému účastníkovi pošle zprávu z konzole obohacenou o určený prefix se jménem
+    - Klíčová slova pro interakci s konzolí: EXIT, PAUSE, CONTINUE.
     
 - Heartbeat
     - Objekt NodeImpl implementuje funkci pro zjišťování stavu sítě 
