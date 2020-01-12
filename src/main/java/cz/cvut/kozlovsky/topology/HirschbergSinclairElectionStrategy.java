@@ -7,9 +7,9 @@ import java.rmi.AlreadyBoundException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 
-import static cz.cvut.kozlovsky.topology.TopologyMessageDirection.LEFT;
-import static cz.cvut.kozlovsky.topology.TopologyMessageDirection.RIGHT;
-import static cz.cvut.kozlovsky.topology.TopologyMessagePurpose.*;
+import static cz.cvut.kozlovsky.topology.TopologyMessage.TopologyMessageDirection.LEFT;
+import static cz.cvut.kozlovsky.topology.TopologyMessage.TopologyMessageDirection.RIGHT;
+import static cz.cvut.kozlovsky.topology.TopologyMessage.TopologyMessagePurpose.*;
 
 public class HirschbergSinclairElectionStrategy implements LeaderElectionStrategy {
 

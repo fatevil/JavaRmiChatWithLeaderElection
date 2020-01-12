@@ -26,4 +26,14 @@ public interface TopologyMessage extends Remote {
     boolean getChangedDirection() throws RemoteException;
 
     void setChangedDirection(boolean changedDirection) throws RemoteException;
+
+    public enum TopologyMessageDirection {
+        LEFT, RIGHT;
+    }
+
+     public enum TopologyMessagePurpose {
+        TOPOLOGY_NOT_OKAY, START_ELECTION, ELECT, ELECTED;
+    }
+
 }
+

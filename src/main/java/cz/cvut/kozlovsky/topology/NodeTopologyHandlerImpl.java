@@ -15,10 +15,8 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.LinkedList;
 import java.util.Queue;
 
-import static cz.cvut.kozlovsky.topology.TopologyMessageDirection.LEFT;
-import static cz.cvut.kozlovsky.topology.TopologyMessageDirection.RIGHT;
-import static cz.cvut.kozlovsky.topology.TopologyMessagePurpose.TOPOLOGY_NOT_OKAY;
-
+import static cz.cvut.kozlovsky.topology.TopologyMessage.TopologyMessageDirection.*;
+import static cz.cvut.kozlovsky.topology.TopologyMessage.TopologyMessagePurpose.*;
 
 @Log
 @Data
