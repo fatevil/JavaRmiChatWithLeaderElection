@@ -1,4 +1,4 @@
-
+(Czech version below)
 
 Console application for chatting. Java RMI used for implementation. Hirschberg-Sinclair algorithm for electing new leader.
 
