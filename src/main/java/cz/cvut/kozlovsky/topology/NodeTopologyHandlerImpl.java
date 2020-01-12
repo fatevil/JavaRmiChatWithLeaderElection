@@ -159,18 +159,7 @@ public class NodeTopologyHandlerImpl extends UnicastRemoteObject implements Node
     }
 
     public NodeTopologyHandler getTopologyHandler(NodeStub node) throws RemoteException, MalformedURLException, NotBoundException {
-//        log.info("Lookup NodeTopologyHandler at: " + "//" + node.getIpAddress() + ":" + node.getPort() + "/TopologyHandler");
-
         return (NodeTopologyHandler) Naming.lookup("//" + node.getIpAddress() + ":" + node.getPort() + "/NodeTopologyHandler");
-    }
-
-    @Override
-    public String toString() {
-        return "NodeTopologyHandlerImpl{" +
-                "myself=" + myself.getId() +
-                ", lN=" + leftNeighbour.getId() +
-                ", rN=" + rightNeighbour.getId() +
-                '}';
     }
 
     @Override

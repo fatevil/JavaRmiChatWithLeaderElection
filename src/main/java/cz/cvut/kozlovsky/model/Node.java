@@ -30,7 +30,7 @@ public interface Node extends Remote, Reachable {
 
     void joinEstablishedNetwork(String remoteAddress, int remotePort, boolean assignNeigbours) throws RemoteException, NotBoundException, MalformedURLException;
 
-    void reassignChatConsole() throws RemoteException;
+    void restoreChatConsole() throws RemoteException;
 
     MessageHandler getChatConsole() throws RemoteException;
 

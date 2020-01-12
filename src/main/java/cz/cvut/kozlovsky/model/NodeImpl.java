@@ -37,8 +37,10 @@ public class NodeImpl extends UnicastRemoteObject implements Node {
     private EstablishedNetwork establishedNetwork;
     private ChatConsole chatConsole;
 
+    private final int HEARTBEAT_INTERVAL = 500; // milliseconds
+
     /**
-     * Constructor for leaders.s
+     * Constructor for leaders.
      */
     public NodeImpl(int id, String ipAddress, int port, String nickname) throws RemoteException, MalformedURLException, AlreadyBoundException, NotBoundException {
         this.id = id;
@@ -50,6 +52,8 @@ public class NodeImpl extends UnicastRemoteObject implements Node {
 
         createEstablishedNetwork(true);
         this.chatConsole = new ChatConsole(establishedNetwork, this);
+
+        // needs to go last
         this.chatConsole.startChatting();
     }
 
@@ -66,6 +70,9 @@ public class NodeImpl extends UnicastRemoteObject implements Node {
 
         joinEstablishedNetwork(remoteAddress, remotePort, true);
         this.chatConsole = new ChatConsole(establishedNetwork, this);
+        this.heartbeat();
+
+        // needs to go last
         this.chatConsole.startChatting();
     }
 
@@ -96,13 +103,35 @@ public class NodeImpl extends UnicastRemoteObject implements Node {
         nodeTopologyHandler.requestNetworkFixed();
     }
 
-    public void reassignChatConsole() {
+    public void restoreChatConsole() {
         chatConsole.setEstablishedNetwork(establishedNetwork);
     }
 
     @Override
     public boolean isConnectedToNetwork() throws RemoteException {
         return StatusCheck.isAvaliable(establishedNetwork, 50, TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * Check if connection to the network is okay. If not, fix it.
+     *
+     * @return
+     */
+    public void heartbeat() {
+        new Thread(() -> {
+            while (true) {
+                try {
+                    boolean isAvailable = StatusCheck.isAvaliable(establishedNetwork, 50, TimeUnit.MILLISECONDS);
+                    if (!isAvailable) {
+                        fixNetwork();
+                    }
+
+                    Thread.sleep(HEARTBEAT_INTERVAL);
+                } catch (RemoteException | MalformedURLException | NotBoundException | AlreadyBoundException | InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
     }
 
 }

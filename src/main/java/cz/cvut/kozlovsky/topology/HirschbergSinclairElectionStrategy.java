@@ -88,7 +88,7 @@ public class HirschbergSinclairElectionStrategy implements LeaderElectionStrateg
 
                     // create new network, don't lose current neighbours
                     nodeTopologyHandler.getNode().createEstablishedNetwork(false);
-                    nodeTopologyHandler.getNode().reassignChatConsole();
+                    nodeTopologyHandler.getNode().restoreChatConsole();
 
                     // announce leader to other nodes
                     sendElected();
@@ -133,7 +133,7 @@ public class HirschbergSinclairElectionStrategy implements LeaderElectionStrateg
                 }
                 // joined newly established network and set up the chat again
                 nodeTopologyHandler.getNode().joinEstablishedNetwork(message.getOriginIpAddress(), message.getOriginPort(), false);
-                nodeTopologyHandler.getNode().reassignChatConsole();
+                nodeTopologyHandler.getNode().restoreChatConsole();
                 nodeTopologyHandler.sendMessage(message);
                 resetVars();
                 break;
