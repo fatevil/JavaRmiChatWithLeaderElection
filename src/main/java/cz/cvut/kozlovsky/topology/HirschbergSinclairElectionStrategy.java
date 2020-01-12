@@ -16,7 +16,7 @@ public class HirschbergSinclairElectionStrategy implements LeaderElectionStrateg
     private final NodeTopologyHandler nodeTopologyHandler;
     private volatile boolean isElectionOn = false;
     private boolean stillHasPotential = true;
-    private boolean returnedVotes = false;
+    private volatile boolean returnedVotes = false;
 
     @Builder
     public HirschbergSinclairElectionStrategy(NodeTopologyHandler nodeTopologyHandler) {
